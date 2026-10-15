@@ -1,0 +1,20 @@
+{
+  "transport": {
+    "preferred": "http3",
+    "protocol": "HTTP/3",
+    "carrier": "QUIC",
+    "enabled": true,
+    "sse": {
+      "enabled": true,
+      "contentType": "text/event-stream",
+      "eventFormat": "datastar-sse",
+      "flushEachEvent": true,
+      "buffering": false
+    },
+    "fallback": ["http2", "http1.1"],
+    "quic": {
+      "tlsMinimumVersion": "1.3",
+      "udpPort": 443
+    }
+  }
+}
