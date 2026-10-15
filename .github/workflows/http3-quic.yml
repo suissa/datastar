@@ -30,7 +30,7 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: "1.23.x"
-          cache-dependency-path: tests/http3/go.sum
+          cache: false
       - name: Download dependencies
         working-directory: tests/http3
         run: go mod tidy
