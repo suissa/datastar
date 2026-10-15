@@ -3,7 +3,7 @@ set -euo pipefail
 
 # Smoke-test an existing SSE endpoint over HTTP/3.
 # Usage:
-#   EXPECTED_EVENT='datastar-patch-elements' ./scripts/test-sse-http3.sh https://example.com/events
+#   EXPECTED_EVENT='datastar-patch-elements' bash scripts/test-sse-http3.sh https://example.com/events
 #
 # The endpoint must emit EXPECTED_EVENT in a complete SSE event shortly after
 # connection. curl must be built with HTTP/3 support. A timeout is expected
@@ -11,7 +11,7 @@ set -euo pipefail
 
 url="${1:-}"
 if [[ -z "$url" ]]; then
-  echo "Usage: EXPECTED_EVENT='substring' $0 https://host/path" >&2
+  echo "Usage: EXPECTED_EVENT='substring' bash $0 https://host/path" >&2
   exit 2
 fi
 
