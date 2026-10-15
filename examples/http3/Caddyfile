@@ -1,0 +1,11 @@
+{
+    servers {
+        protocols h1 h2 h3
+    }
+}
+
+# Replace the hostname and upstream with your deployment values.
+# Expose TCP/443 and UDP/443 to allow HTTPS and HTTP/3 respectively.
+example.com {
+    reverse_proxy app:8080
+}
