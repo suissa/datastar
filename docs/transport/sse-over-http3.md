@@ -52,6 +52,10 @@ Use a browser's Network panel or an HTTP/3-capable client to verify the negotiat
 
 A successful HTTP/3 handshake alone is insufficient: verify that a complete Datastar SSE event arrives and that the stream is not buffered.
 
+The repository also includes an isolated integration test module in `tests/http3/` and a GitHub Actions workflow at `.github/workflows/http3-quic.yml`. It starts a local HTTP/3 server over UDP, asserts that the client negotiated HTTP/3, and reads a complete `datastar-patch-elements` SSE event before the stream closes. Run it locally with `cd tests/http3 && go test -v -count=1 ./...`.
+
+`examples/http3/transport.json` records the intended deployment policy: prefer HTTP/3 over QUIC, keep Datastar SSE framing unchanged, flush events without buffering, and allow HTTP/2 and HTTP/1.1 fallback. This is a deployment/configuration example, not a browser-side protocol switch; the browser still negotiates HTTP/3 with the server or edge proxy.
+
 ## Benchmark before recommending it
 
 Compare the same endpoint over HTTP/2 and HTTP/3 with equivalent payloads and concurrency. Record time-to-first-event and event delivery latency (p50/p95/p99), disconnect/reconnect behavior, dropped or duplicated application events, CPU and memory per connection, and behavior under packet loss and network changes. QUIC may improve connection setup or loss behavior in some environments; it does not guarantee lower application latency in every deployment.
