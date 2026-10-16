@@ -20,7 +20,7 @@ function setup(markup, options = {}) {
 }
 
 const accordion = (mode = 'single') => `
-  <section id="acc" data-component="accordion" data-accordion-mode="${mode}">
+  <section id="acc" data-component="accordion" data-accordion-item-mode="${mode}">
     <article id="item-a" data-component="accordion-item" data-state="closed">
       <button id="trigger-a" data-component="accordion-trigger" type="button">A</button>
       <div id="content-a" data-component="accordion-content">Content A</div>
@@ -87,6 +87,52 @@ test('multiple mode allows two items to remain open', () => {
   document.querySelector('#trigger-b').dispatchEvent(new MouseEvent('click', { bubbles: true }))
   assert.equal(document.querySelector('#item-a').dataset.state, 'open')
   assert.equal(document.querySelector('#item-b').dataset.state, 'open')
+  dom.window.close()
+})
+
+test('openAll opens every item in multiple mode', () => {
+  const dom = setup(accordion('multiple'))
+  const { document, MouseEvent } = dom.window
+  const action = document.createElement('button')
+  action.dataset.accordionAction = 'openAll'
+  document.querySelector('#acc').append(action)
+  action.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+
+  for (const item of document.querySelectorAll('[data-component="accordion-item"]')) {
+    assert.equal(item.dataset.state, 'open')
+    assert.equal(item.querySelector('[data-component="accordion-content"]').hidden, false)
+  }
+  dom.window.close()
+})
+
+test('openAll is ignored in single mode', () => {
+  const dom = setup(accordion('single'))
+  const { document, MouseEvent } = dom.window
+  const action = document.createElement('button')
+  action.dataset.accordionAction = 'openAll'
+  document.querySelector('#acc').append(action)
+  action.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+
+  for (const item of document.querySelectorAll('[data-component="accordion-item"]')) {
+    assert.equal(item.dataset.state, 'closed')
+    assert.equal(item.querySelector('[data-component="accordion-content"]').hidden, true)
+  }
+  dom.window.close()
+})
+
+test('closeAll closes every item in multiple mode', () => {
+  const dom = setup(accordion('multiple'))
+  const { document, MouseEvent } = dom.window
+  document.querySelector('#trigger-a').dispatchEvent(new MouseEvent('click', { bubbles: true }))
+  document.querySelector('#trigger-b').dispatchEvent(new MouseEvent('click', { bubbles: true }))
+  const action = document.createElement('button')
+  action.dataset.accordionAction = 'closeAll'
+  document.querySelector('#acc').append(action)
+  action.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+
+  for (const item of document.querySelectorAll('[data-component="accordion-item"]')) {
+    assert.equal(item.dataset.state, 'closed')
+  }
   dom.window.close()
 })
 
