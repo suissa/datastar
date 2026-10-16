@@ -86,10 +86,14 @@
   }
 
   function scan(root) {
-    if (root.nodeType === Node.ELEMENT_NODE && root.matches('[data-on\\:load], [data-on-load]')) {
-      runLoadAction(root);
+    const candidates = [];
+    if (root.nodeType === Node.ELEMENT_NODE) candidates.push(root);
+    root.querySelectorAll?.('*').forEach((el) => candidates.push(el));
+    for (const el of candidates) {
+      if (el.hasAttribute('data-on:load') || el.hasAttribute('data-on-load')) {
+        runLoadAction(el);
+      }
     }
-    root.querySelectorAll?.('[data-on\\:load], [data-on-load]').forEach(runLoadAction);
   }
 
   // Capture submit before any framework/bubbling handler. This prevents the
@@ -97,8 +101,8 @@
   document.addEventListener('submit', (event) => {
     const form = event.target;
     if (!(form instanceof HTMLFormElement)) return;
-    const el = form.closest('[data-component="chat"][data-on\\:load], [data-component="chat"][data-on-load]');
-    if (!el) return;
+    const el = form.closest('[data-component="chat"]');
+    if (!el || (!el.hasAttribute('data-on:load') && !el.hasAttribute('data-on-load'))) return;
     event.preventDefault();
     event.stopImmediatePropagation();
     const input = form.querySelector('[name="message"]');
