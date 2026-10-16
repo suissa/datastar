@@ -11,7 +11,8 @@ let generatedContentId = 0
 type ComponentElement = HTMLElement
 
 const setState = (el: ComponentElement, open: boolean): void => {
-  el.dataset.state = open ? OPEN : CLOSED
+  const state = open ? OPEN : CLOSED
+  if (el.dataset.state !== state) el.dataset.state = state
   el.classList.toggle('is-open', open)
   el.classList.toggle('is-closed', !open)
 }
