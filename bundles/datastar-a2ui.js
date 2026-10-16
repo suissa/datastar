@@ -1,69 +1,48 @@
 /**
- * Datastar A2UI bridge.
+ * Datastar A2UI bridge — A2UI protocol v0.9.
  *
- * Uses the chat component's existing WebSocket; it never opens a second socket.
- * The data-a2ui attribute selects a local, allowlisted component catalog.
+ * The data-a2ui attribute selects an allowlisted component catalog.
+ * A2UI messages travel over the WebSocket opened by datastar-more-actions.js.
  */
 (() => {
   'use strict';
 
   const catalogs = Object.freeze({
-    chat: new Set(['text', 'card', 'badge', 'metric', 'button'])
+    chat: {
+      catalogId: 'https://datastar.local/a2ui/catalogs/chat',
+      components: new Set(['Text', 'Divider'])
+    }
   });
   const surfaces = new WeakMap();
 
-  function element(tag, className, text) {
-    const node = document.createElement(tag);
-    if (className) node.className = className;
-    if (text !== undefined) node.textContent = String(text);
-    return node;
+  function safeText(value) {
+    if (typeof value === 'string' || typeof value === 'number') return String(value);
+    if (value && typeof value === 'object' && typeof value.literalString === 'string') return value.literalString;
+    return '';
   }
 
-  function renderComponent(host, component, catalogName) {
-    if (!component || typeof component !== 'object' || Array.isArray(component)) return;
-    const allowed = catalogs[catalogName];
-    if (!allowed || !allowed.has(component.type)) return;
+  function renderComponent(surface, component, allowed) {
+    if (!component || typeof component !== 'object' || !allowed.has(component.component)) return null;
+    if (component.id !== 'root') return null;
 
-    let node;
-    switch (component.type) {
-      case 'text':
-        node = element('p', 'text-sm leading-6 text-gray-200', component.text || '');
-        break;
-      case 'badge':
-        node = element('span', 'inline-flex w-fit rounded-full border border-sky-300/20 bg-sky-400/10 px-3 py-1 text-xs font-medium text-sky-100', component.label || '');
-        break;
-      case 'metric': {
-        node = element('section', 'rounded-2xl border border-white/10 bg-white/5 p-4');
-        node.append(element('p', 'text-xs text-gray-400', component.label || 'Métrica'));
-        node.append(element('p', 'mt-1 text-2xl font-semibold text-white', component.value ?? '—'));
-        if (component.detail) node.append(element('p', 'mt-1 text-xs text-gray-400', component.detail));
-        break;
-      }
-      case 'card': {
-        node = element('section', 'rounded-2xl border border-white/10 bg-[#292929] p-4');
-        if (component.title) node.append(element('h3', 'text-sm font-semibold text-white', component.title));
-        if (component.text) node.append(element('p', 'mt-2 whitespace-pre-wrap text-sm leading-6 text-gray-300', component.text));
-        if (component.action && typeof component.action === 'string' && component.actionLabel) {
-          const button = element('button', 'mt-3 rounded-xl border border-white/15 bg-white/5 px-3 py-2 text-xs text-white transition hover:bg-white/10', component.actionLabel);
-          button.type = 'button';
-          button.dataset.a2uiAction = component.action;
-          node.append(button);
-        }
-        break;
-      }
-      case 'button':
-        node = element('button', 'w-fit rounded-xl border border-sky-300/25 bg-sky-500/10 px-4 py-2 text-sm text-sky-100 transition hover:bg-sky-500/20', component.label || 'Continuar');
-        node.type = 'button';
-        if (typeof component.action === 'string') node.dataset.a2uiAction = component.action;
-        else node.disabled = true;
-        break;
-      default:
-        return;
+    if (component.component === 'Text') {
+      const variant = ['h1', 'h2', 'h3'].includes(component.variant) ? component.variant : 'body';
+      const tag = ({ h1: 'h2', h2: 'h3', h3: 'h4', body: 'p' })[variant];
+      const classes = variant === 'body'
+        ? 'text-sm leading-6 text-gray-200'
+        : 'text-base font-semibold text-white';
+      const node = document.createElement(tag);
+      node.className = classes;
+      node.textContent = safeText(component.text);
+      return node;
     }
 
-    node.dataset.a2uiComponent = component.type;
-    host.append(node);
-    host.scrollTop = host.scrollHeight;
+    if (component.component === 'Divider') {
+      const node = document.createElement('hr');
+      node.className = 'my-2 border-white/10';
+      return node;
+    }
+    return null;
   }
 
   function initialize(root) {
@@ -74,24 +53,45 @@
     for (const host of candidates) {
       if (surfaces.has(host)) continue;
       const catalogName = host.dataset.a2ui;
-      if (!catalogs[catalogName]) continue;
-      const surface = host.querySelector('[data-a2ui-surface]');
-      if (!surface) continue;
+      const catalog = catalogs[catalogName];
+      const surfaceNode = host.querySelector('[data-a2ui-surface]');
+      if (!catalog || !surfaceNode) continue;
 
+      const state = { surfaceId: null, created: false };
       const onMessage = (event) => {
         const payload = event.detail;
-        if (!payload || payload.type !== 'a2ui-component' || payload.catalog !== catalogName) return;
-        renderComponent(surface, payload.component, catalogName);
+        if (!payload || typeof payload !== 'object') return;
+
+        if (payload.createSurface) {
+          const message = payload.createSurface;
+          if (payload.version !== 'v0.9' || message.catalogId !== catalog.catalogId) return;
+          state.surfaceId = message.surfaceId;
+          state.created = true;
+          return;
+        }
+
+        if (payload.updateComponents) {
+          const update = payload.updateComponents;
+          if (payload.version !== 'v0.9' || !state.created || update.surfaceId !== state.surfaceId) return;
+          for (const component of update.components || []) {
+            const node = renderComponent(surfaceNode, component, catalog.components);
+            if (!node) continue;
+            if (component.id === 'root') surfaceNode.replaceChildren(node);
+            else surfaceNode.append(node);
+          }
+        }
       };
+
       const onClick = (event) => {
         const button = event.target.closest('[data-a2ui-request], [data-a2ui-action]');
         if (!button || !host.contains(button)) return;
         const action = button.dataset.a2uiRequest || button.dataset.a2uiAction;
-        if (!action) return;
+        if (!action || !state.created) return;
         host.dispatchEvent(new CustomEvent('datastar:ws-send', {
-          detail: { type: 'a2ui-action', catalog: catalogName, action }
+          detail: { type: 'a2ui-action', catalog: catalogName, action, surfaceId: state.surfaceId }
         }));
       };
+
       host.addEventListener('datastar:ws-message', onMessage);
       host.addEventListener('click', onClick);
       surfaces.set(host, () => {
@@ -115,11 +115,8 @@
       }
       for (const node of record.removedNodes) {
         if (node.nodeType !== Node.ELEMENT_NODE) continue;
-        const cleanup = (el) => {
-          surfaces.get(el)?.();
-          el.querySelectorAll?.('[data-a2ui]').forEach((child) => surfaces.get(child)?.());
-        };
-        cleanup(node);
+        surfaces.get(node)?.();
+        node.querySelectorAll?.('[data-a2ui]').forEach((child) => surfaces.get(child)?.());
       }
     }
   }).observe(document.documentElement, { childList: true, subtree: true });
