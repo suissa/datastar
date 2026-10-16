@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-10-16T00:00:00Z",
+  "mode": "sample",
+  "environment": {"server":"Datastar HTTP/3 benchmark harness","payloadBytes":4096,"rounds":20,"sseEvents":20,"sseIntervalMs":2,"note":"Illustrative seed values only. Run the benchmark to replace this file with measured results."},
+  "results": {
+    "http2": {"protocol":"HTTP/2 over TLS/TCP","requestLatencyMs":{"min":3.1,"p50":4.2,"p95":6.7,"p99":7.1,"max":7.4,"mean":4.5},"throughputMbps":7.8,"sse":{"timeToFirstEventMs":4.8,"totalDurationMs":45.2,"eventsPerSecond":442.5,"eventsReceived":20}},
+    "http3": {"protocol":"HTTP/3 over QUIC/UDP","requestLatencyMs":{"min":2.8,"p50":3.9,"p95":6.1,"p99":6.8,"max":7.0,"mean":4.1},"throughputMbps":8.3,"sse":{"timeToFirstEventMs":4.1,"totalDurationMs":43.7,"eventsPerSecond":457.7,"eventsReceived":20}}
+  },
+  "comparison":{"latencyP50ImprovementPercent":7.1,"throughputImprovementPercent":6.4,"sseTTFEImprovementPercent":14.6,"interpretation":"Sample data only; never use these values as evidence of real performance."}
+}
