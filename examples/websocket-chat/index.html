@@ -170,6 +170,7 @@
         clearTimeout(pauseTimer);
         if (mic) mic.hidden = true;
         if (endVoice) endVoice.hidden = true;
+        if (form) form.hidden = false;
         if (speakToggle) speakToggle.checked = false;
         window.speechSynthesis?.cancel();
         showVoiceHistory();
@@ -291,10 +292,17 @@
           if (payload?.role === 'assistant' && typeof payload.text === 'string' && payload.text.trim()) {
             saveVoiceMessage('assistant', payload.text);
             if (speakToggle?.checked && 'speechSynthesis' in window && 'SpeechSynthesisUtterance' in window) {
+              if (listening && recognition) recognition.stop();
               window.speechSynthesis.cancel();
               const utterance = new SpeechSynthesisUtterance(payload.text.trim());
               utterance.lang = 'pt-BR';
-              utterance.onend = () => setStatus(listening ? 'Ouvindo…' : 'Resposta falada · clique no microfone para continuar');
+              utterance.onend = () => {
+                if (voiceMode && recognition) {
+                  try { recognition.start(); } catch { /* Recognition may still be shutting down. */ }
+                } else {
+                  setStatus('Resposta falada');
+                }
+              };
               utterance.onerror = () => setStatus('Não foi possível falar a resposta');
               window.speechSynthesis.speak(utterance);
             }
