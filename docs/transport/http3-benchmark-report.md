@@ -20,6 +20,6 @@ The initial benchmark-sample.json supplies illustrative values only. It is not p
 
 ## Validation coverage
 
-The workflow .github/workflows/http3-benchmark.yml builds the harness, runs Go tests with the race detector, runs go vet, validates the JSON fixtures, and checks that the dashboard and Datastar SSE hook are present.
+The workflow .github/workflows/http3-benchmark.yml builds the harness, runs Go tests with the race detector, runs go vet, starts the real server, executes an HTTP/2 + HTTP/3 + SSE benchmark against it, asserts both protocols delivered all expected events, verifies that both JSON files were overwritten with measured results, validates the JSON fixtures, and checks the dashboard and Datastar SSE hook.
 
 The local microbenchmark does not simulate packet loss, browser rendering, concurrent production users, or a real CDN/proxy path. A production conclusion requires repeatable runs in the target network and deployment environment. The local generated TLS certificate is for development only.
