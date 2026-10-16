@@ -18,9 +18,10 @@ const server = createServer(async (req, res) => {
     res.end(html)
     return
   }
-  if (url.pathname === '/bundles/datastar-more-actions.js') {
+  if (url.pathname === '/bundles/datastar-more-actions.js' || url.pathname === '/bundles/datastar-a2ui.js') {
     try {
-      const script = await readFile(resolve(repoRoot, 'bundles/datastar-more-actions.js'))
+      const filename = url.pathname.endsWith('datastar-a2ui.js') ? 'datastar-a2ui.js' : 'datastar-more-actions.js'
+      const script = await readFile(resolve(repoRoot, 'bundles', filename))
       res.writeHead(200, { 'content-type': MIME['.js'], 'cache-control': 'no-store' })
       res.end(script)
     } catch {
@@ -47,6 +48,29 @@ server.on('upgrade', (req, socket, head) => {
   })
 })
 
+// The chat catalog is an explicit server-side allowlist. Never accept component
+// names or component payloads directly from the browser.
+const a2uiCatalogs = {
+  chat: {
+    'show-card': { type: 'card', title: 'Componente A2UI', text: 'Este cartão foi enviado pelo servidor usando o mesmo WebSocket do chat.', action: 'show-button', actionLabel: 'Pedir componente botão' },
+    'show-status': { type: 'badge', label: 'Status enviado pelo servidor: conectado' },
+    'show-metric': { type: 'metric', label: 'Mensagens processadas', value: '1', detail: 'Componente A2UI independente' },
+    'show-button': { type: 'button', label: 'Clique para receber um texto', action: 'show-text' },
+    'show-text': { type: 'text', text: 'O servidor recebeu o clique e enviou exatamente um componente A2UI.' }
+  }
+}
+
+function handleA2UIAction(ws, payload) {
+  if (typeof payload?.catalog !== 'string' || typeof payload?.action !== 'string') return
+  const component = a2uiCatalogs[payload.catalog]?.[payload.action]
+  if (!component || ws.readyState !== WebSocket.OPEN) return
+  ws.send(JSON.stringify({
+    type: 'a2ui-component',
+    catalog: payload.catalog,
+    component
+  }))
+}
+
 function createReply(text) {
   if (/capital do brasil/i.test(text)) {
     return 'A capital do Brasil é Brasília.'
@@ -70,6 +94,10 @@ wss.on('connection', (ws) => {
   ws.on('message', (raw) => {
     let payload
     try { payload = JSON.parse(raw.toString()) } catch { return }
+    if (payload?.type === 'a2ui-action') {
+      handleA2UIAction(ws, payload)
+      return
+    }
     if (payload?.type !== 'message' || typeof payload.text !== 'string') return
     const text = payload.text.trim().slice(0, 2000)
     if (!text) return
