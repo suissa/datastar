@@ -10,6 +10,7 @@
   'use strict';
 
   const connected = new WeakSet();
+  const cleanups = new WeakMap();
 
   function connectElement(el, channel) {
     if (connected.has(el)) return;
@@ -22,7 +23,8 @@
       el.append(node);
       return node;
     })();
-    const status = el.querySelector('[data-ws-status]');
+    const status = el.querySelector('[data-ws-status]') || document.querySelector('[data-ws-status]');
+    const indicator = status?.parentElement?.querySelector('[data-ws-indicator]');
     const form = el.querySelector('form');
     const input = form?.querySelector('[name="message"]');
 
@@ -32,8 +34,12 @@
     socketUrl.searchParams.set('channel', channel);
     const socket = new WebSocket(socketUrl);
 
-    const setStatus = (text) => {
+    const setStatus = (text, state) => {
       if (status) status.textContent = text;
+      if (indicator) {
+        indicator.classList.remove('bg-amber-400', 'bg-emerald-400', 'bg-red-400');
+        indicator.classList.add(state === 'connected' ? 'bg-emerald-400' : state === 'error' ? 'bg-red-400' : 'bg-amber-400');
+      }
     };
     const appendMessage = (text, kind = 'message') => {
       const line = document.createElement('div');
@@ -45,9 +51,9 @@
       output.scrollTop = output.scrollHeight;
     };
 
-    socket.addEventListener('open', () => setStatus('Conectado'));
-    socket.addEventListener('close', () => setStatus('Desconectado'));
-    socket.addEventListener('error', () => setStatus('Erro de conexão'));
+    socket.addEventListener('open', () => setStatus('Conectado', 'connected'));
+    socket.addEventListener('close', () => setStatus('Desconectado', 'idle'));
+    socket.addEventListener('error', () => setStatus('Erro de conexão', 'error'));
     socket.addEventListener('message', (event) => {
       let payload = event.data;
       try { payload = JSON.parse(String(event.data)); } catch { /* plain text */ }
@@ -58,8 +64,7 @@
       el.dispatchEvent(new CustomEvent('datastar:ws-message', { detail: payload }));
     });
 
-    if (form) {
-      form.addEventListener('submit', (event) => {
+    const onSubmit = (event) => {
         // Always stop browser navigation, even while the socket is connecting.
         event.preventDefault();
         event.stopPropagation();
@@ -68,16 +73,18 @@
         socket.send(JSON.stringify({ type: 'message', text }));
         input.value = '';
         input.focus();
-      });
-    }
+    };
+    if (form) form.addEventListener('submit', onSubmit);
 
     const cleanup = () => {
       connected.delete(el);
+      cleanups.delete(el);
+      if (form) form.removeEventListener('submit', onSubmit);
       if (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING) {
         socket.close(1000, 'Element removed');
       }
     };
-    el.addEventListener('datastar:ws-disconnect', cleanup, { once: true });
+    cleanups.set(el, cleanup);
   }
 
   function runLoadAction(el) {
@@ -106,6 +113,14 @@
     for (const record of records) {
       for (const node of record.addedNodes) {
         if (node.nodeType === Node.ELEMENT_NODE) scan(node);
+      }
+      for (const node of record.removedNodes) {
+        if (node.nodeType !== Node.ELEMENT_NODE) continue;
+        const remove = (el) => {
+          cleanups.get(el)?.();
+          el.querySelectorAll?.('*').forEach((child) => cleanups.get(child)?.());
+        };
+        remove(node);
       }
       if (record.type === 'attributes' && record.target instanceof Element) {
         runLoadAction(record.target);
