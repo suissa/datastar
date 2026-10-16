@@ -25,18 +25,24 @@
     const previousHandler = animationHandlers.get(content)
     if (previousHandler) content.removeEventListener('animationend', previousHandler)
 
-    content.classList.remove('animate__slideInDown', 'animate__slideOutUp')
+    content.classList.remove(
+      'animate__slideInDown',
+      'animate__slideOutUp',
+      'animate__slideOutDown',
+    )
     content.hidden = false
 
     // Restart the CSS animation when the same panel is toggled repeatedly.
     void content.offsetWidth
     content.classList.add('animate__animated')
-    content.classList.add(open ? 'animate__slideInDown' : 'animate__slideOutUp')
+    // Content is attached to the bottom edge of the heading: it enters downward
+    // from behind the heading and collapses away from that attachment edge.
+    content.classList.add(open ? 'animate__slideInDown' : 'animate__slideOutDown')
 
     const onAnimationEnd = (event) => {
       if (event.target !== content) return
 
-      const isClosing = content.classList.contains('animate__slideOutUp')
+      const isClosing = content.classList.contains('animate__slideOutDown')
       if (isClosing && content.dataset.state === CLOSED) {
         content.hidden = true
       }
@@ -44,6 +50,7 @@
         'animate__animated',
         'animate__slideInDown',
         'animate__slideOutUp',
+        'animate__slideOutDown',
       )
       content.removeEventListener('animationend', onAnimationEnd)
       animationHandlers.delete(content)
@@ -76,14 +83,12 @@
       if (animate && wasOpen !== open) {
         animateContent(content, open)
       } else if (!(animate && animationHandlers.has(content))) {
-        // A data-state mutation can be observed after the click handler has
-        // already started an animation. Do not reset visibility/classes while
-        // that animation is still running.
         content.hidden = !open
         content.classList.remove(
           'animate__animated',
           'animate__slideInDown',
           'animate__slideOutUp',
+          'animate__slideOutDown',
         )
       }
     }
