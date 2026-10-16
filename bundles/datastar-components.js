@@ -20,7 +20,32 @@
     content: item.querySelector('[data-component="accordion-content"]'),
   })
 
-  const syncItem = (item, open) => {
+  const animateContent = (content, open) => {
+    content.classList.remove('animate__slideInDown', 'animate__slideOutUp')
+    content.hidden = false
+
+    // Restart the CSS animation when the same panel is toggled repeatedly.
+    void content.offsetWidth
+    content.classList.add('animate__animated')
+    content.classList.add(open ? 'animate__slideInDown' : 'animate__slideOutUp')
+
+    content.addEventListener('animationend', (event) => {
+      if (event.target !== content) return
+
+      const isClosing = content.classList.contains('animate__slideOutUp')
+      if (isClosing && content.dataset.state === CLOSED) {
+        content.hidden = true
+      }
+      content.classList.remove(
+        'animate__animated',
+        'animate__slideInDown',
+        'animate__slideOutUp',
+      )
+    }, { once: true })
+  }
+
+  const syncItem = (item, open, animate = false) => {
+    const wasOpen = item.classList.contains('is-open')
     const { trigger, content } = parts(item)
     item.classList.add('ui-accordion__item')
     setState(item, open)
@@ -37,8 +62,18 @@
 
     if (content) {
       content.classList.add('ui-accordion__content')
-      content.hidden = !open
       setState(content, open)
+
+      if (animate && wasOpen !== open) {
+        animateContent(content, open)
+      } else {
+        content.hidden = !open
+        content.classList.remove(
+          'animate__animated',
+          'animate__slideInDown',
+          'animate__slideOutUp',
+        )
+      }
     }
   }
 
@@ -76,10 +111,10 @@
 
       if ((root.dataset.accordionMode || 'single') === 'single') {
         for (const sibling of items()) {
-          if (sibling !== item) syncItem(sibling, false)
+          if (sibling !== item) syncItem(sibling, false, true)
         }
       }
-      syncItem(item, !wasOpen)
+      syncItem(item, !wasOpen, true)
     }
 
     root.addEventListener('click', onClick)
@@ -144,6 +179,7 @@
         syncItem(
           record.target,
           record.target.dataset.state === OPEN,
+          true,
         )
       }
     }
