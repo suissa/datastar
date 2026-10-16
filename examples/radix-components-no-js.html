@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>Datastar Components — demonstração sem JavaScript</title>
+<style>
+:root{color-scheme:dark;font-family:system-ui,sans-serif;background:#080d17;color:#e8eef8;accent-color:#00d2fd}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:radial-gradient(ellipse at 15% 0%,#122b45 0,transparent 42%),#080d17}
+main{width:min(850px,calc(100% - 2rem));margin:auto;padding:3rem 0}
+.eyebrow{color:#00d2fd;font:700 .75rem ui-monospace,monospace;letter-spacing:.16em;text-transform:uppercase}
+h1{font-size:clamp(2rem,5vw,3.5rem);letter-spacing:-.05em;margin:.7rem 0}
+.intro,.muted{color:#a7b4c9;line-height:1.7}
+.panel{margin-top:1.25rem;padding:1.5rem;border:1px solid #283449;border-radius:1rem;background:#0c1422}
+h2{margin:0 0 .5rem;font-size:1.1rem}
+p{line-height:1.7}
+.tabset{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.25rem;padding:.25rem;border:1px solid #283449;border-radius:.75rem;background:#080d17}
+.tabset input{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+.tabset label{padding:.7rem .5rem;text-align:center;border-radius:.5rem;cursor:pointer;color:#a7b4c9}
+.tabset input:checked+label{background:#1a2b43;color:#e8eef8}
+.tabset input:focus-visible+label{outline:2px solid #00d2fd;outline-offset:2px}
+.tab-panel{display:none;padding:1rem .25rem;color:#a7b4c9;line-height:1.7}
+#tab-account:checked~.panels #panel-account,#tab-security:checked~.panels #panel-security,#tab-billing:checked~.panels #panel-billing{display:block}
+.control-row{display:flex;align-items:center;gap:1rem;flex-wrap:wrap;margin:1rem 0}
+.check{display:inline-flex;align-items:center;gap:.6rem;cursor:pointer}
+.check input{width:1.1rem;height:1.1rem;accent-color:#00d2fd}
+.switch{display:inline-flex;align-items:center;gap:.75rem;cursor:pointer}
+.switch input{appearance:none;width:2.75rem;height:1.55rem;padding:.15rem;margin:0;border:1px solid #52617a;border-radius:999px;background:#080d17;cursor:pointer;display:inline-flex;align-items:center;transition:background 140ms ease,border-color 140ms ease}
+.switch input::before{content:"";width:1.1rem;height:1.1rem;border-radius:50%;background:#a7b4c9;transition:transform 140ms ease}
+.switch input:checked{border-color:#00d2fd;background:#00d2fd}
+.switch input:checked::before{transform:translateX(1.15rem);background:#06111d}
+.switch input:focus-visible{outline:2px solid #00d2fd;outline-offset:3px}
+.note{padding:.8rem 1rem;border-left:3px solid #00d2fd;background:#101d2e;color:#a7b4c9;font-size:.9rem}
+@media(max-width:520px){.panel{padding:1rem}.tabset label{font-size:.9rem}}
+@media(prefers-reduced-motion:reduce){.switch input,.switch input::before{transition:none}}
+</style>
+</head>
+<body>
+<main>
+<div class="eyebrow">Datastar Components / CSS-only</div>
+<h1>Primitives sem JavaScript</h1>
+<p class="intro">Demonstração feita apenas com HTML e CSS. Abra este arquivo diretamente no navegador ou execute <code>npx live-server examples</code> na raiz do repositório.</p>
+<p class="note">Este exemplo não carrega os módulos da biblioteca e não executa JavaScript. Os controles usam recursos nativos do navegador e seletores CSS.</p>
+<section class="panel">
+<h2>Tabs</h2>
+<p class="muted">Selecione uma aba. A troca de conteúdo é feita por CSS com inputs radio.</p>
+<div class="tabset">
+<input type="radio" name="tabs" id="tab-account" checked><label for="tab-account">Account</label>
+<input type="radio" name="tabs" id="tab-security"><label for="tab-security">Security</label>
+<input type="radio" name="tabs" id="tab-billing"><label for="tab-billing">Billing</label>
+<div class="panels" style="grid-column:1/-1">
+<div class="tab-panel" id="panel-account">Manage your profile and personal preferences.</div>
+<div class="tab-panel" id="panel-security">Configure authentication and security settings.</div>
+<div class="tab-panel" id="panel-billing">Review plans and payment details.</div>
+</div>
+</div>
+</section>
+<section class="panel">
+<h2>Checkbox</h2>
+<div class="control-row">
+<label class="check"><input type="checkbox"> I accept the terms and conditions</label>
+<label class="check"><input type="checkbox" checked> Receive product updates</label>
+<label class="check"><input type="checkbox" disabled> Unavailable option</label>
+</div>
+</section>
+<section class="panel">
+<h2>Switch</h2>
+<div class="control-row"><label class="switch"><input type="checkbox" checked> Enable notifications</label></div>
+<div class="control-row"><label class="switch"><input type="checkbox"> Maintenance mode</label></div>
+</section>
+<section class="panel">
+<h2>Accordion nativo</h2>
+<details><summary>What does this example prove?</summary><p class="muted">Disclosure behavior is built into the browser using the HTML details and summary elements.</p></details>
+<details><summary>Does it use Datastar?</summary><p class="muted">No. Datastar's reactive attributes require its JavaScript runtime. This page demonstrates the closest native HTML/CSS alternatives without JavaScript.</p></details>
+</section>
+</main>
+</body>
+</html>
