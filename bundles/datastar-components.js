@@ -7,6 +7,7 @@
   const CLOSED = 'closed'
   let nextContentId = 0
   const accordionCleanups = new WeakMap()
+  const animationHandlers = new WeakMap()
 
   const setState = (element, open) => {
     const state = open ? OPEN : CLOSED
@@ -21,6 +22,9 @@
   })
 
   const animateContent = (content, open) => {
+    const previousHandler = animationHandlers.get(content)
+    if (previousHandler) content.removeEventListener('animationend', previousHandler)
+
     content.classList.remove('animate__slideInDown', 'animate__slideOutUp')
     content.hidden = false
 
@@ -29,7 +33,7 @@
     content.classList.add('animate__animated')
     content.classList.add(open ? 'animate__slideInDown' : 'animate__slideOutUp')
 
-    content.addEventListener('animationend', (event) => {
+    const onAnimationEnd = (event) => {
       if (event.target !== content) return
 
       const isClosing = content.classList.contains('animate__slideOutUp')
@@ -41,7 +45,12 @@
         'animate__slideInDown',
         'animate__slideOutUp',
       )
-    }, { once: true })
+      content.removeEventListener('animationend', onAnimationEnd)
+      animationHandlers.delete(content)
+    }
+
+    animationHandlers.set(content, onAnimationEnd)
+    content.addEventListener('animationend', onAnimationEnd)
   }
 
   const syncItem = (item, open, animate = false) => {
