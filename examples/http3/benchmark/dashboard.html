@@ -90,7 +90,7 @@ function render(r){
 }
 async function loadReport(){try{var res=await fetch("/api/results?ts="+Date.now(),{cache:"no-store"});if(!res.ok)throw new Error("report request failed");render(await res.json())}catch(e){byId("run-status").textContent="Unable to load JSON report: "+e.message}}
 byId("refresh-button").addEventListener("click",loadReport);
-byId("run-button").addEventListener("click",function(){byId("run-status").textContent="Benchmark requested through Datastar SSE…";var count=0;var poll=setInterval(async function(){count++;await loadReport();if((reportData&&reportData.mode==="measured")||count>=120)clearInterval(poll)},1000)});
+byId("run-button").addEventListener("click",function(){byId("run-status").textContent="Benchmark requested through Datastar SSE…";var prior=reportData?reportData.generatedAt:"";var count=0;var poll=setInterval(async function(){count++;await loadReport();if((reportData&&reportData.mode==="measured"&&reportData.generatedAt!==prior)||count>=120)clearInterval(poll)},1000)});
 if("IntersectionObserver" in window){var observer=new IntersectionObserver(function(entries){entries.forEach(function(e){if(e.isIntersecting){e.target.classList.add("visible");observer.unobserve(e.target)}})},{threshold:.12});document.querySelectorAll(".reveal").forEach(function(el){observer.observe(el)})}else{document.querySelectorAll(".reveal").forEach(function(el){el.classList.add("visible")})}
 document.addEventListener("DOMContentLoaded",function(){if(window.lucide)lucide.createIcons();loadReport()});
 window.addEventListener("resize",function(){["latency-chart","surface-chart","sse-chart","scatter-chart"].forEach(function(id){var el=byId(id);if(el&&el.data)Plotly.Plots.resize(el)})});
