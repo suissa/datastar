@@ -84,7 +84,6 @@
       setState(content, open)
 
       if (animate && wasOpen !== open) {
-        animateElement(item, open)
         animateContent(content, open)
       } else if (!(animate && animationHandlers.has(content))) {
         content.hidden = !open
