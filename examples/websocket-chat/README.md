@@ -34,13 +34,14 @@ Sem `OPENAI_API_KEY`, o exemplo usa respostas determinísticas para continuar fu
 - A interface renderiza o texto com `textContent`; não interpreta HTML vindo do agente.
 - A URL da página permanece em `/`; o formulário não executa navegação nem adiciona query string.
 
-## Voz e ditado com Web Speech API
+## Conversa por áudio e Web Speech API
 
-A interface inclui controles nativos do navegador:
+A primeira mensagem pergunta **“Você prefere conversar via áudio?”**, com os botões **🎙️ SIM** e **💬 NÃO**.
 
-- **Falar respostas do bot** usa `speechSynthesis` para ler mensagens recebidas com voz em português (`pt-BR`). Desmarque a opção para silenciar.
-- **Mostrar enquanto falo** atualiza o campo de mensagem com resultados parciais do reconhecimento.
-- **Mostrar a cada pausa** segura os resultados parciais e atualiza o texto após aproximadamente 700 ms sem novas palavras; os trechos reconhecidos como finais também são preservados.
-- **Ativar microfone** inicia/paralisa `SpeechRecognition`. O texto transcrito fica no campo para revisão e envio manual.
+- **SIM** solicita a permissão do microfone. No modo de áudio, a transcrição final é enviada ao bot pelo WebSocket sem ser mostrada no histórico visual durante a conversa.
+- As respostas do bot são lidas em voz alta em português (`pt-BR`). A captura é pausada durante a fala do bot para reduzir a transcrição do próprio áudio e é retomada depois.
+- As mensagens de usuário e bot são salvas em `localStorage`. Ao selecionar **⏹️ Encerrar conversa por áudio**, o histórico salvo é renderizado no chat como mensagens comuns, e o campo de texto volta a ficar disponível.
+- **NÃO** fecha a pergunta inicial e mantém a conversa por texto.
+- Os controles de transcrição **Mostrar enquanto falo** e **Mostrar a cada pausa** continuam disponíveis para ditado no modo texto; a opção de pausa atualiza resultados parciais após aproximadamente 700 ms sem novas palavras.
 
-O reconhecimento depende do suporte do navegador e da permissão do microfone. Use uma versão compatível do Chrome ou Edge e, fora de `localhost`, sirva a página por HTTPS. O reconhecimento de voz pode depender de serviços do navegador; não é garantido que funcione offline.
+O reconhecimento depende do suporte do navegador e da permissão do microfone. Use uma versão compatível do Chrome ou Edge e, fora de `localhost`, sirva a página por HTTPS. O reconhecimento de voz pode depender de serviços do navegador; não é garantido que funcione offline. O histórico de áudio permanece no armazenamento local do navegador até ser apagado manualmente.
