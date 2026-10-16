@@ -42,13 +42,33 @@
               <button type="button" data-chat-prompt="Repita minha mensagem: teste do botão" class="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-left text-xs text-gray-200 transition hover:bg-white/10 sm:text-sm">Testar resposta com minha mensagem</button>
             </div>
           </div>
-          <div data-ws-messages class="flex max-h-[52vh] min-h-28 flex-col overflow-y-auto px-1" aria-live="polite" aria-label="Mensagens do chat"></div>
+          <div data-ws-messages class="flex max-h-[52vh] min-h-28 flex-col overflow-y-auto px-1" aria-live="polite" aria-label="Mensagens do chat">
+            <div id="voice-choice" class="mr-auto mb-3 max-w-[90%] rounded-2xl rounded-bl-md border border-white/10 bg-white/10 px-4 py-4 text-sm text-slate-100">
+              <p class="mb-3 font-medium">Você prefere conversar via áudio?</p>
+              <div class="flex flex-wrap gap-2">
+                <button id="voice-choice-yes" type="button" class="rounded-xl bg-sky-500 px-4 py-2 font-medium text-white transition hover:bg-sky-400">🎙️ SIM</button>
+                <button id="voice-choice-no" type="button" class="rounded-xl border border-white/15 bg-white/5 px-4 py-2 font-medium text-white transition hover:bg-white/10">💬 NÃO</button>
+              </div>
+            </div>
+          </div>
           <div data-a2ui-surface class="flex flex-col gap-3 px-1 pt-3" aria-live="polite" aria-label="Componentes A2UI enviados pelo servidor"></div>
         </div>
         <div class="sticky bottom-0 bg-chat-bg pb-3 pt-2">
+          <div class="mb-2 flex flex-wrap items-center gap-3 rounded-2xl border border-white/10 bg-white/[.03] px-3 py-2 text-xs text-chat-muted" aria-label="Configurações de voz">
+            <button id="voice-end" type="button" hidden class="rounded-lg border border-rose-400/30 bg-rose-500/10 px-3 py-1.5 text-rose-100 hover:bg-rose-500/20">⏹️ Encerrar conversa por áudio</button>
+            <label class="flex items-center gap-2"><input id="speech-speak" type="checkbox" checked class="accent-sky-400"> Falar respostas do bot</label>
+            <label class="flex items-center gap-2">Transcrição
+              <select id="speech-mode" class="rounded-lg border border-white/10 bg-[#2f2f2f] px-2 py-1 text-xs text-white">
+                <option value="live">Mostrar enquanto falo</option>
+                <option value="pause">Mostrar a cada pausa</option>
+              </select>
+            </label>
+            <button id="speech-mic" type="button" class="rounded-lg border border-sky-400/30 bg-sky-500/10 px-3 py-1.5 text-sky-100 hover:bg-sky-500/20" aria-pressed="false">Ativar microfone</button>
+            <span id="speech-status" role="status" aria-live="polite">Voz desativada</span>
+          </div>
           <form class="rounded-3xl border border-white/10 bg-[#2f2f2f] p-2 shadow-composer focus-within:border-white/20">
             <label class="sr-only" for="message">Enviar mensagem</label>
-            <textarea id="message" name="message" rows="1" required maxlength="2000" autocomplete="off" placeholder="Envie uma mensagem…" class="max-h-40 min-h-11 w-full resize-y bg-transparent px-3 py-3 text-sm leading-6 text-white outline-none placeholder:text-[#9b9b9b]"></textarea>
+            <textarea id="message" name="message" rows="1" required maxlength="2000" autocomplete="off" placeholder="Envie uma mensagem ou use o microfone…" class="max-h-40 min-h-11 w-full resize-y bg-transparent px-3 py-3 text-sm leading-6 text-white outline-none placeholder:text-[#9b9b9b]"></textarea>
             <div class="flex items-center justify-between px-1 pb-1"><span class="px-2 text-xs text-chat-muted">Canal compartilhado: #chat</span><button type="submit" aria-label="Enviar mensagem" title="Enviar mensagem" class="grid h-9 w-9 place-items-center rounded-full bg-white text-black transition hover:bg-gray-200"><svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
           </form>
           <p class="mt-3 text-center text-[11px] text-chat-muted">Exemplo local · mensagens são enviadas aos clientes conectados ao mesmo canal.</p>
@@ -73,6 +93,240 @@
         field.form?.requestSubmit();
       }
     });
+
+    // Voice conversations keep their transcript locally until the user ends the session.
+    (() => {
+      const root = document.querySelector('[data-component="chat"]');
+      const output = root?.querySelector('[data-ws-messages]');
+      const field = document.querySelector('#message');
+      const form = field?.form;
+      const mic = document.querySelector('#speech-mic');
+      const mode = document.querySelector('#speech-mode');
+      const speakToggle = document.querySelector('#speech-speak');
+      const status = document.querySelector('#speech-status');
+      const choice = document.querySelector('#voice-choice');
+      const yes = document.querySelector('#voice-choice-yes');
+      const no = document.querySelector('#voice-choice-no');
+      const endVoice = document.querySelector('#voice-end');
+      const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      const STORAGE_KEY = 'datastar-chat-voice-history';
+      let recognition = null;
+      let listening = false;
+      let voiceMode = false;
+      let finalTranscript = '';
+      let pendingInterim = '';
+      let pauseTimer = null;
+      let voiceHistory = [];
+
+      try {
+        const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+        if (Array.isArray(saved)) voiceHistory = saved.filter(item => item && typeof item.text === 'string' && ['user', 'assistant'].includes(item.role));
+      } catch { voiceHistory = []; }
+
+      const setStatus = (message) => { if (status) status.textContent = message; };
+      const persistHistory = () => {
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(voiceHistory)); }
+        catch { setStatus('Não foi possível salvar o histórico localmente'); }
+      };
+      const saveVoiceMessage = (role, text) => {
+        if (!text?.trim()) return;
+        voiceHistory.push({ role, text: text.trim(), timestamp: Date.now() });
+        voiceHistory = voiceHistory.slice(-300);
+        persistHistory();
+      };
+      const appendVisibleMessage = (role, text) => {
+        const line = document.createElement('div');
+        line.className = role === 'user'
+          ? 'ml-auto mb-3 max-w-[85%] whitespace-pre-wrap break-words rounded-2xl rounded-br-md bg-[#303030] px-4 py-3 text-sm text-white'
+          : 'mr-auto mb-3 max-w-[85%] whitespace-pre-wrap break-words rounded-2xl rounded-bl-md bg-white/10 px-4 py-3 text-sm text-slate-100';
+        line.textContent = text;
+        output?.append(line);
+      };
+      const showVoiceHistory = () => {
+        if (!output) return;
+        output.replaceChildren();
+        voiceHistory.forEach(item => appendVisibleMessage(item.role, item.text));
+        output.scrollTop = output.scrollHeight;
+      };
+      const renderTranscript = (includeInterim) => {
+        const transcript = [finalTranscript.trim(), includeInterim ? pendingInterim.trim() : ''].filter(Boolean).join(' ').trim();
+        if (!voiceMode) {
+          field.value = transcript.slice(0, 2000);
+          field.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+      };
+      const sendVoiceUtterance = (text) => {
+        const clean = text.trim().slice(0, 2000);
+        if (!clean || !voiceMode) return;
+        saveVoiceMessage('user', clean);
+        root.dispatchEvent(new CustomEvent('datastar:ws-send', {
+          detail: { type: 'message', text: clean, role: 'user' }
+        }));
+        setStatus('Mensagem enviada por áudio · aguardando resposta');
+      };
+      const finishVoiceConversation = () => {
+        voiceMode = false;
+        finalTranscript = '';
+        pendingInterim = '';
+        if (field) field.value = '';
+        if (listening && recognition) recognition.stop();
+        clearTimeout(pauseTimer);
+        if (mic) mic.hidden = true;
+        if (endVoice) endVoice.hidden = true;
+        if (form) form.hidden = false;
+        if (speakToggle) speakToggle.checked = false;
+        window.speechSynthesis?.cancel();
+        showVoiceHistory();
+        setStatus('Conversa por áudio encerrada · histórico exibido');
+      };
+
+      if (mic && !Recognition) {
+        mic.disabled = true;
+        mic.title = 'Este navegador não oferece SpeechRecognition. Tente Chrome ou Edge.';
+        setStatus('Reconhecimento de voz indisponível neste navegador');
+      }
+      if (mic) mic.hidden = true;
+
+      if (Recognition) {
+        recognition = new Recognition();
+        recognition.lang = 'pt-BR';
+        recognition.continuous = true;
+        recognition.interimResults = true;
+        recognition.maxAlternatives = 1;
+        recognition.addEventListener('start', () => {
+          listening = true;
+          mic.textContent = '⏹️ Parar microfone';
+          mic.setAttribute('aria-pressed', 'true');
+          setStatus(mode.value === 'live' ? 'Ouvindo · transcrição ao vivo' : 'Ouvindo · transcrição após pausa');
+        });
+        recognition.addEventListener('result', (event) => {
+          let interim = '';
+          for (let i = event.resultIndex; i < event.results.length; i += 1) {
+            const result = event.results[i];
+            const text = result[0]?.transcript || '';
+            if (result.isFinal) {
+              const finalText = text.trim();
+              if (voiceMode && finalText) sendVoiceUtterance(finalText);
+              else if (!voiceMode && finalText) finalTranscript = [finalTranscript.trim(), finalText].filter(Boolean).join(' ').trim();
+              interim = '';
+            } else {
+              interim += text;
+            }
+          }
+          pendingInterim = interim.trim();
+          if (!voiceMode) {
+            if (mode.value === 'live') renderTranscript(true);
+            else {
+              clearTimeout(pauseTimer);
+              if (pendingInterim) pauseTimer = setTimeout(() => renderTranscript(true), 700);
+              else renderTranscript(false);
+            }
+            if (finalTranscript) renderTranscript(mode.value === 'live');
+          }
+        });
+        recognition.addEventListener('error', (event) => {
+          const messages = {
+            'not-allowed': 'Permissão de microfone negada',
+            'audio-capture': 'Nenhum microfone disponível',
+            'no-speech': 'Nenhuma fala detectada',
+            'network': 'Falha de rede no reconhecimento de voz'
+          };
+          setStatus(messages[event.error] || `Erro de reconhecimento: ${event.error}`);
+          if (event.error === 'not-allowed' && voiceMode) finishVoiceConversation();
+        });
+        recognition.addEventListener('end', () => {
+          listening = false;
+          clearTimeout(pauseTimer);
+          mic.textContent = '🎙️ Ativar microfone';
+          mic.setAttribute('aria-pressed', 'false');
+          if (!voiceMode && (finalTranscript || pendingInterim)) renderTranscript(true);
+          if (voiceMode) setStatus('Microfone pausado · clique para retomar');
+        });
+      }
+
+      const startVoiceConversation = async () => {
+        if (!Recognition || !recognition) {
+          setStatus('Este navegador não oferece reconhecimento de voz. Tente Chrome ou Edge.');
+          return;
+        }
+        try {
+          if (!navigator.mediaDevices?.getUserMedia) throw new Error('A permissão de microfone exige HTTPS ou localhost.');
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          stream.getTracks().forEach(track => track.stop());
+          voiceMode = true;
+          choice?.remove();
+          if (mic) mic.hidden = false;
+          if (endVoice) endVoice.hidden = false;
+          if (speakToggle) speakToggle.checked = true;
+          if (form) form.hidden = true;
+          if (field) field.value = '';
+          try { recognition.start(); }
+          catch (error) {
+            if (error.name !== 'InvalidStateError') throw error;
+          }
+          setStatus('Conversa por áudio iniciada · mensagens ficam ocultas até encerrar');
+        } catch (error) {
+          setStatus(error.name === 'NotAllowedError' ? 'Permissão do microfone negada' : error.message || 'Não foi possível ativar o microfone');
+        }
+      };
+
+      yes?.addEventListener('click', startVoiceConversation);
+      no?.addEventListener('click', () => {
+        choice?.remove();
+        voiceMode = false;
+        setStatus('Modo texto selecionado');
+      });
+      endVoice?.addEventListener('click', finishVoiceConversation);
+      mic?.addEventListener('click', () => {
+        if (!recognition || !voiceMode) return;
+        if (listening) recognition.stop();
+        else {
+          try { recognition.start(); }
+          catch (error) { setStatus(`Não foi possível iniciar o microfone: ${error.message}`); }
+        }
+      });
+      mode?.addEventListener('change', () => {
+        if (!listening) setStatus(mode.value === 'live' ? 'Transcrição ao vivo selecionada' : 'Transcrição após pausa selecionada');
+      });
+
+      root?.addEventListener('datastar:ws-message', (event) => {
+        const payload = event.detail;
+        if (voiceMode) {
+          if (payload?.role === 'assistant' && typeof payload.text === 'string' && payload.text.trim()) {
+            saveVoiceMessage('assistant', payload.text);
+            if (speakToggle?.checked && 'speechSynthesis' in window && 'SpeechSynthesisUtterance' in window) {
+              if (listening && recognition) recognition.stop();
+              window.speechSynthesis.cancel();
+              const utterance = new SpeechSynthesisUtterance(payload.text.trim());
+              utterance.lang = 'pt-BR';
+              utterance.onend = () => {
+                if (voiceMode && recognition) {
+                  try { recognition.start(); } catch { /* Recognition may still be shutting down. */ }
+                } else {
+                  setStatus('Resposta falada');
+                }
+              };
+              utterance.onerror = () => setStatus('Não foi possível falar a resposta');
+              window.speechSynthesis.speak(utterance);
+            }
+          }
+          // The shared WebSocket renderer appends before dispatching this event; keep the voice transcript private until end.
+          if (output) output.replaceChildren();
+          return;
+        }
+        if (!speakToggle?.checked || payload?.role !== 'assistant' || typeof payload.text !== 'string' || !payload.text.trim()) return;
+        if (!('speechSynthesis' in window) || !('SpeechSynthesisUtterance' in window)) {
+          setStatus('Síntese de voz indisponível neste navegador');
+          return;
+        }
+        const utterance = new SpeechSynthesisUtterance(payload.text.trim());
+        utterance.lang = 'pt-BR';
+        window.speechSynthesis.cancel();
+        window.speechSynthesis.speak(utterance);
+      });
+
+      // Keep the transcript private while voice mode is active; the text composer is restored at the end.
+    })();
   </script>
 </body>
 </html>
