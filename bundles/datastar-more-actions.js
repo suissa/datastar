@@ -12,6 +12,7 @@
   const connected = new WeakSet();
   const cleanups = new WeakMap();
   const sockets = new WeakMap();
+  const renderers = new WeakMap();
 
   function connectElement(el, channel) {
     if (connected.has(el)) return;
@@ -42,15 +43,20 @@
         indicator.classList.add(state === 'connected' ? 'bg-emerald-400' : state === 'error' ? 'bg-red-400' : 'bg-amber-400');
       }
     };
-    const appendMessage = (text, kind = 'message') => {
+    const appendMessage = (text, kind = 'assistant') => {
       const line = document.createElement('div');
-      line.className = kind === 'system'
-        ? 'mx-auto my-3 max-w-fit rounded-full bg-white/5 px-3 py-1 text-xs text-slate-400'
-        : 'mr-auto mb-3 max-w-[85%] whitespace-pre-wrap break-words rounded-2xl rounded-bl-md bg-white/10 px-4 py-3 text-sm text-slate-100';
+      if (kind === 'system') {
+        line.className = 'mx-auto my-3 max-w-fit rounded-full bg-white/5 px-3 py-1 text-xs text-slate-400';
+      } else if (kind === 'user') {
+        line.className = 'ml-auto mb-3 max-w-[85%] whitespace-pre-wrap break-words rounded-2xl rounded-br-md bg-[#303030] px-4 py-3 text-sm text-white';
+      } else {
+        line.className = 'mr-auto mb-3 max-w-[85%] whitespace-pre-wrap break-words rounded-2xl rounded-bl-md bg-white/10 px-4 py-3 text-sm text-slate-100';
+      }
       line.textContent = text;
       output.append(line);
       output.scrollTop = output.scrollHeight;
     };
+    renderers.set(el, appendMessage);
 
     socket.addEventListener('open', () => setStatus('Conectado', 'connected'));
     socket.addEventListener('close', () => setStatus('Desconectado', 'idle'));
@@ -60,7 +66,8 @@
       try { payload = JSON.parse(String(event.data)); } catch { /* plain text */ }
       const text = typeof payload === 'string' ? payload : payload?.text;
       if (typeof text === 'string' && text.length) {
-        appendMessage(text, text.startsWith('Connected to #') ? 'system' : 'message');
+        const role = payload?.role || (text.startsWith('Connected to #') ? 'system' : 'assistant');
+        appendMessage(text, role === 'user' ? 'user' : role === 'system' ? 'system' : 'assistant');
       }
       el.dispatchEvent(new CustomEvent('datastar:ws-message', { detail: payload }));
     });
@@ -69,6 +76,7 @@
       connected.delete(el);
       cleanups.delete(el);
       sockets.delete(el);
+      renderers.delete(el);
       if (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING) {
         socket.close(1000, 'Element removed');
       }
@@ -109,7 +117,8 @@
     const text = input?.value?.trim();
     const socket = sockets.get(el);
     if (!text || !socket || socket.readyState !== WebSocket.OPEN) return;
-    socket.send(JSON.stringify({ type: 'message', text }));
+    renderers.get(el)?.(text, 'user');
+    socket.send(JSON.stringify({ type: 'message', text, role: 'user' }));
     input.value = '';
     input.focus();
   }, true);
