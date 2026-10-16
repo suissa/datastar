@@ -166,6 +166,9 @@
       };
       const finishVoiceConversation = () => {
         voiceMode = false;
+        finalTranscript = '';
+        pendingInterim = '';
+        if (field) field.value = '';
         if (listening && recognition) recognition.stop();
         clearTimeout(pauseTimer);
         if (mic) mic.hidden = true;
