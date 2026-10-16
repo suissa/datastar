@@ -99,7 +99,6 @@
       let finalTranscript = '';
       let pendingInterim = '';
       let pauseTimer = null;
-      let lastSpoken = '';
 
       const setStatus = (message) => { if (status) status.textContent = message; };
       const renderTranscript = (includeInterim) => {
@@ -207,8 +206,6 @@
           return;
         }
         const text = payload.text.trim();
-        if (text === lastSpoken) return;
-        lastSpoken = text;
         window.speechSynthesis.cancel();
         const utterance = new SpeechSynthesisUtterance(text);
         utterance.lang = 'pt-BR';
