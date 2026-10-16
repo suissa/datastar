@@ -23,43 +23,45 @@
     content: item.querySelector('[data-component="accordion-content"]'),
   })
 
-  const animateContent = (content, open) => {
-    const previousHandler = animationHandlers.get(content)
-    if (previousHandler) content.removeEventListener('animationend', previousHandler)
+  const animateElement = (element, open, hideOnClose = false) => {
+    const previousHandler = animationHandlers.get(element)
+    if (previousHandler) element.removeEventListener('animationend', previousHandler)
 
-    content.classList.remove(
+    element.classList.remove(
+      'animate__animated',
       OPEN_ANIMATION,
       CLOSE_ANIMATION,
       'animate__slideOutDown',
     )
-    content.hidden = false
+    if (hideOnClose) element.hidden = false
 
-    // Restart the CSS animation when the same panel is toggled repeatedly.
-    void content.offsetWidth
-    content.classList.add('animate__animated')
-    // Keep the direction configurable in one place; collapse exits upward.
-    content.classList.add(open ? OPEN_ANIMATION : CLOSE_ANIMATION)
+    // Apply the same Animate.css transition to both the panel and its content.
+    void element.offsetWidth
+    element.classList.add('animate__animated')
+    element.classList.add(open ? OPEN_ANIMATION : CLOSE_ANIMATION)
 
     const onAnimationEnd = (event) => {
-      if (event.target !== content) return
+      if (event.target !== element) return
 
-      const isClosing = content.classList.contains(CLOSE_ANIMATION)
-      if (isClosing && content.dataset.state === CLOSED) {
-        content.hidden = true
+      const isClosing = element.classList.contains(CLOSE_ANIMATION)
+      if (hideOnClose && isClosing && element.dataset.state === CLOSED) {
+        element.hidden = true
       }
-      content.classList.remove(
+      element.classList.remove(
         'animate__animated',
         OPEN_ANIMATION,
         CLOSE_ANIMATION,
         'animate__slideOutDown',
       )
-      content.removeEventListener('animationend', onAnimationEnd)
-      animationHandlers.delete(content)
+      element.removeEventListener('animationend', onAnimationEnd)
+      animationHandlers.delete(element)
     }
 
-    animationHandlers.set(content, onAnimationEnd)
-    content.addEventListener('animationend', onAnimationEnd)
+    animationHandlers.set(element, onAnimationEnd)
+    element.addEventListener('animationend', onAnimationEnd)
   }
+
+  const animateContent = (content, open) => animateElement(content, open, true)
 
   const syncItem = (item, open, animate = false) => {
     const wasOpen = item.classList.contains('is-open')
