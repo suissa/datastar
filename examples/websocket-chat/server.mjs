@@ -114,7 +114,7 @@ async function generateComponentText(action) {
   let buffer = ''
   let generated = ''
   const consume = (frame) => {
-    const data = frame.split('\\n').filter((line) => line.startsWith('data:')).map((line) => line.slice(5).trim()).join('\\n')
+    const data = frame.split('\n').filter((line) => line.startsWith('data:')).map((line) => line.slice(5).trim()).join('\n')
     if (!data || data === '[DONE]') return
     try {
       const event = JSON.parse(data)
@@ -125,7 +125,7 @@ async function generateComponentText(action) {
   while (true) {
     const { value, done } = await reader.read()
     buffer += decoder.decode(value || new Uint8Array(), { stream: !done })
-    const frames = buffer.split(/\\r?\\n\\r?\\n/)
+    const frames = buffer.split(/\r?\n\r?\n/)
     buffer = frames.pop() || ''
     for (const frame of frames) consume(frame)
     if (done) break
