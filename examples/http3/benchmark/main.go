@@ -140,7 +140,7 @@ func runBenchmark(ctx context.Context,addr string,s Settings)error{
 	rep:=Report{SchemaVersion:1,GeneratedAt:time.Now().UTC(),Mode:"measured",Environment:map[string]any{"server":"Datastar HTTP/3 benchmark harness","payloadBytes":s.Payload,"rounds":s.Rounds,"sseEvents":s.Events,"sseIntervalMs":s.Interval,"note":"Measured locally. Repeat on target infrastructure before deployment decisions."},Results:map[string]Metrics{"http2":h2,"http3":h3}}
 	rep.Comparison=map[string]any{"latencyP50ImprovementPercent":improve(h2.RequestLatencyMs.P50,h3.RequestLatencyMs.P50),"throughputImprovementPercent":improve(h2.ThroughputMbps,h3.ThroughputMbps),"sseTTFEImprovementPercent":improve(h2.SSE.TimeToFirstEventMs,h3.SSE.TimeToFirstEventMs),"interpretation":"This run describes this environment only; neither transport is universally faster."}
 	b,e:=json.MarshalIndent(rep,"","  ");if e!=nil{return e}
-	path:=filepath.Join(root,"..","benchmark-results.json");if e=os.WriteFile(path,b,0644);e!=nil{return fmt.Errorf("write JSON report: %w",e)}
+	for _,name:=range []string{"benchmark-results.json","benchmark-sample.json"}{path:=filepath.Join(root,"..",name);if e=os.WriteFile(path,b,0644);e!=nil{return fmt.Errorf("write JSON report %s: %w",path,e)}}
 	reportMu.Lock();last=rep;reportMu.Unlock();return nil
 }
 func measure(ctx context.Context,c *http.Client,base,label string,major int,s Settings)(Metrics,error){
