@@ -2,7 +2,7 @@
 :root {
   color-scheme: light;
   --ds-component-text: #1f2937;
-  --ds-component-surface: transparent;
+  --ds-component-surface: #ffffff;
   --ds-component-border: #d1d5db;
   --ds-component-border-active: #64748b;
 }
@@ -10,7 +10,7 @@
 .dark {
   color-scheme: dark;
   --ds-component-text: #f1f5f9;
-  --ds-component-surface: transparent;
+  --ds-component-surface: #0f172a;
   --ds-component-border: #334155;
   --ds-component-border-active: #818cf8;
 }
@@ -23,6 +23,15 @@
   border: 1px solid var(--ds-component-border, #d1d5db);
   border-radius: 0.5rem;
   overflow: clip;
+}
+
+.ui-accordion__item > h2,
+.ui-accordion__item > h3,
+.ui-accordion__item > h4 {
+  position: relative;
+  z-index: 2;
+  margin: 0;
+  background: var(--ds-component-surface, #ffffff);
 }
 
 .ui-accordion__trigger {
@@ -49,6 +58,8 @@
 }
 
 .ui-accordion__content {
+  position: relative;
+  z-index: 1;
   padding: 0 1rem 1rem;
 }
 
