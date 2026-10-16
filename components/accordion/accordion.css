@@ -1,0 +1,79 @@
+ds-accordion {
+  display: block;
+  width: 100%;
+  color: var(--ds-accordion-foreground, #e8eef8);
+  font: inherit;
+}
+
+ds-accordion-item {
+  display: block;
+  border-bottom: 1px solid var(--ds-accordion-border, #283449);
+}
+
+ds-accordion-header {
+  display: block;
+  margin: 0;
+  font: inherit;
+}
+
+ds-accordion-trigger {
+  appearance: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  width: 100%;
+  padding: 1rem 0.25rem;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+
+ds-accordion-trigger::after {
+  content: "+";
+  flex: none;
+  color: var(--ds-accordion-accent, #00d2fd);
+  font-size: 1.35rem;
+  line-height: 1;
+  transition: transform 160ms ease;
+}
+
+ds-accordion-trigger[aria-expanded="true"]::after {
+  content: "−";
+}
+
+ds-accordion-trigger:hover { color: var(--ds-accordion-accent, #00d2fd); }
+ds-accordion-trigger:focus-visible {
+  outline: 2px solid var(--ds-accordion-accent, #00d2fd);
+  outline-offset: 4px;
+  border-radius: 0.25rem;
+}
+ds-accordion-trigger:disabled,
+ds-accordion-item[data-disabled] ds-accordion-trigger {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+ds-accordion-content {
+  display: block;
+  padding: 0 0.25rem 1rem;
+  color: var(--ds-accordion-muted, #a7b4c9);
+  line-height: 1.7;
+}
+ds-accordion-content[hidden] { display: none; }
+ds-accordion-content p { margin: 0; }
+ds-accordion-content p + p { margin-top: 0.75rem; }
+
+@media (prefers-reduced-motion: no-preference) {
+  ds-accordion-content:not([hidden]) {
+    animation: ds-accordion-in 160ms ease-out;
+  }
+  @keyframes ds-accordion-in {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+}
