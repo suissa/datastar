@@ -1,0 +1,65 @@
+name: HTTP/3 benchmark dashboard
+
+on:
+  pull_request:
+    paths:
+      - "examples/http3/benchmark/**"
+      - "examples/http3/benchmark-sample.json"
+      - "docs/transport/http3-benchmark-report.md"
+      - ".github/workflows/http3-benchmark.yml"
+  push:
+    branches: [develop]
+    paths:
+      - "examples/http3/benchmark/**"
+      - "examples/http3/benchmark-sample.json"
+      - "docs/transport/http3-benchmark-report.md"
+      - ".github/workflows/http3-benchmark.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  benchmark-harness:
+    name: Build and validate benchmark harness
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.23.x"
+          cache: false
+      - name: Resolve dependencies
+        working-directory: examples/http3/benchmark
+        run: go mod tidy
+      - name: Run unit tests
+        working-directory: examples/http3/benchmark
+        run: go test -v -race -count=1 ./...
+      - name: Vet Go code
+        working-directory: examples/http3/benchmark
+        run: go vet ./...
+      - name: Run live HTTP/2 + HTTP/3 + SSE benchmark integration
+        working-directory: examples/http3/benchmark
+        run: |
+          set -euo pipefail
+          go run . -addr 127.0.0.1:18443 -rounds 3 -payload 1024 -events 4 -event-interval-ms 1 >/tmp/datastar-benchmark.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          ready=0
+          for i in $(seq 1 60); do
+            if curl -kfsS https://127.0.0.1:18443/ -o /dev/null; then ready=1; break; fi
+            sleep 1
+          done
+          if [ "$ready" -ne 1 ]; then cat /tmp/datastar-benchmark.log; exit 1; fi
+          curl -kfsS -X POST https://127.0.0.1:18443/api/benchmark >/tmp/datastar-benchmark-result.json
+          python3 -c 'import json; r=json.load(open("/tmp/datastar-benchmark-result.json")); assert r["mode"] == "measured"; assert r["results"]["http2"]["sse"]["eventsReceived"] == 4; assert r["results"]["http3"]["sse"]["eventsReceived"] == 4; print("Live HTTP/2, HTTP/3 and SSE benchmark passed")'
+          python3 -c 'import json; assert json.load(open("../benchmark-sample.json"))["mode"] == "measured"; assert json.load(open("../benchmark-results.json"))["mode"] == "measured"; print("Both JSON report files overwritten with measured data")'
+      - name: Validate JSON fixtures
+        run: |
+          python3 -m json.tool examples/http3/benchmark/transport.json >/dev/null
+          python3 -m json.tool examples/http3/benchmark-sample.json >/dev/null
+      - name: Check dashboard and Datastar SSE hooks exist
+        run: |
+          grep -q 'DATASTAR benchmarks report' examples/http3/benchmark/dashboard.html
+          grep -q "data-on:click=\"@post('/datastar/benchmark')\"" examples/http3/benchmark/dashboard.html
+          grep -q 'datastar-patch-elements' examples/http3/benchmark/main.go

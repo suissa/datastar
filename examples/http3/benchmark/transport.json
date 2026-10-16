@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "listenAddress": "127.0.0.1:8443",
+  "dashboardPath": "/",
+  "protocols": ["http2", "http3"],
+  "tlsMinimumVersion": "1.3",
+  "http3": {"enabled": true, "carrier": "QUIC", "udpPort": 8443},
+  "http2": {"enabled": true, "carrier": "TCP", "tcpPort": 8443},
+  "benchmark": {"defaultRounds": 20, "defaultPayloadBytes": 4096, "defaultSSEEvents": 20, "defaultSSEIntervalMs": 2, "maxRounds": 200, "maxPayloadBytes": 1048576, "maxSSEEvents": 500, "flushEachSSEEvent": true},
+  "results": {"sampleFile": "../benchmark-sample.json", "outputFile": "../benchmark-results.json", "overwriteOnRun": true},
+  "security": {"selfSignedCertificate": "local-development-only", "production": "Use a trusted certificate and a correctly configured HTTP/3-capable origin or edge proxy."}
+}
