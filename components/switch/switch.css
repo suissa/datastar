@@ -1,0 +1,7 @@
+ds-switch { display: inline-flex; align-items: center; width: 2.75rem; height: 1.55rem; padding: .15rem; border: 1px solid var(--ds-switch-border, #52617a); border-radius: 999px; background: #0c1422; cursor: pointer; vertical-align: middle; transition: background 140ms ease, border-color 140ms ease; }
+ds-switch::before { content: ""; display: block; width: 1.1rem; height: 1.1rem; border-radius: 50%; background: #a7b4c9; transition: transform 140ms ease, background 140ms ease; }
+ds-switch[checked] { border-color: var(--ds-switch-accent, #00d2fd); background: var(--ds-switch-accent, #00d2fd); }
+ds-switch[checked]::before { transform: translateX(1.15rem); background: #06111d; }
+ds-switch:focus-visible { outline: 2px solid var(--ds-switch-accent, #00d2fd); outline-offset: 3px; }
+ds-switch[disabled] { opacity: .45; cursor: not-allowed; }
+@media (prefers-reduced-motion: reduce) { ds-switch, ds-switch::before { transition: none; } }
