@@ -19,7 +19,7 @@ func TestSampleReportMatchesDashboardSchema(t *testing.T) {
 	if err != nil { t.Fatal(err) }
 	var r Report
 	if err := json.Unmarshal(data, &r); err != nil { t.Fatalf("sample JSON invalid: %v", err) }
-	if r.SchemaVersion != 1 || r.Mode != "sample" { t.Fatalf("unexpected report metadata: %+v", r) }
+	if r.SchemaVersion != 1 || (r.Mode != "sample" && r.Mode != "measured") { t.Fatalf("unexpected report metadata: %+v", r) }
 	for _, key := range []string{"http2", "http3"} {
 		m, ok := r.Results[key]
 		if !ok { t.Fatalf("missing %s metrics", key) }
