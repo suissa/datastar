@@ -75,8 +75,9 @@ func main() {
 	root,err=os.Getwd(); if err!=nil {fatal(err)}
 	cert,err:=makeCertificate(); if err!=nil {fatal(err)}
 	tlsConfig:=&tls.Config{Certificates:[]tls.Certificate{cert},MinVersion:tls.VersionTLS13,NextProtos:[]string{"h2",http3.NextProtoH3}}
+	_,port,_:=net.SplitHostPort(*addr);altSvc:=fmt.Sprintf("h3=\":%s\"; ma=86400",port)
 	mux:=http.NewServeMux()
-	mux.HandleFunc("/",func(w http.ResponseWriter,r *http.Request){if r.URL.Path!="/" {http.NotFound(w,r);return};w.Header().Set("Cache-Control","no-store");http.ServeFile(w,r,filepath.Join(root,"dashboard.html"))})
+	mux.HandleFunc("/",func(w http.ResponseWriter,r *http.Request){if r.URL.Path!="/" {http.NotFound(w,r);return};w.Header().Set("Cache-Control","no-store");w.Header().Set("Alt-Svc",altSvc);http.ServeFile(w,r,filepath.Join(root,"dashboard.html"))})
 	mux.HandleFunc("/api/results",resultsHandler)
 	mux.HandleFunc("/api/sample",func(w http.ResponseWriter,r *http.Request){http.ServeFile(w,r,filepath.Join(root,"..","benchmark-sample.json"))})
 	mux.HandleFunc("/bench/payload",func(w http.ResponseWriter,r *http.Request){n,_:=strconv.Atoi(r.URL.Query().Get("bytes"));if n<1{n=4096};if n>1<<20{n=1<<20};w.Header().Set("Content-Type","application/octet-stream");w.Header().Set("Cache-Control","no-store");_,_=w.Write(make([]byte,n))})
