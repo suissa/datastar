@@ -46,9 +46,20 @@
           <div data-a2ui-surface class="flex flex-col gap-3 px-1 pt-3" aria-live="polite" aria-label="Componentes A2UI enviados pelo servidor"></div>
         </div>
         <div class="sticky bottom-0 bg-chat-bg pb-3 pt-2">
+          <div class="mb-2 flex flex-wrap items-center gap-3 rounded-2xl border border-white/10 bg-white/[.03] px-3 py-2 text-xs text-chat-muted" aria-label="Configurações de voz">
+            <label class="flex items-center gap-2"><input id="speech-speak" type="checkbox" checked class="accent-sky-400"> Falar respostas do bot</label>
+            <label class="flex items-center gap-2">Transcrição
+              <select id="speech-mode" class="rounded-lg border border-white/10 bg-[#2f2f2f] px-2 py-1 text-xs text-white">
+                <option value="live">Mostrar enquanto falo</option>
+                <option value="pause">Mostrar a cada pausa</option>
+              </select>
+            </label>
+            <button id="speech-mic" type="button" class="rounded-lg border border-sky-400/30 bg-sky-500/10 px-3 py-1.5 text-sky-100 hover:bg-sky-500/20" aria-pressed="false">Ativar microfone</button>
+            <span id="speech-status" role="status" aria-live="polite">Voz desativada</span>
+          </div>
           <form class="rounded-3xl border border-white/10 bg-[#2f2f2f] p-2 shadow-composer focus-within:border-white/20">
             <label class="sr-only" for="message">Enviar mensagem</label>
-            <textarea id="message" name="message" rows="1" required maxlength="2000" autocomplete="off" placeholder="Envie uma mensagem…" class="max-h-40 min-h-11 w-full resize-y bg-transparent px-3 py-3 text-sm leading-6 text-white outline-none placeholder:text-[#9b9b9b]"></textarea>
+            <textarea id="message" name="message" rows="1" required maxlength="2000" autocomplete="off" placeholder="Envie uma mensagem ou use o microfone…" class="max-h-40 min-h-11 w-full resize-y bg-transparent px-3 py-3 text-sm leading-6 text-white outline-none placeholder:text-[#9b9b9b]"></textarea>
             <div class="flex items-center justify-between px-1 pb-1"><span class="px-2 text-xs text-chat-muted">Canal compartilhado: #chat</span><button type="submit" aria-label="Enviar mensagem" title="Enviar mensagem" class="grid h-9 w-9 place-items-center rounded-full bg-white text-black transition hover:bg-gray-200"><svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
           </form>
           <p class="mt-3 text-center text-[11px] text-chat-muted">Exemplo local · mensagens são enviadas aos clientes conectados ao mesmo canal.</p>
@@ -73,6 +84,147 @@
         field.form?.requestSubmit();
       }
     });
+
+    // Browser-native Web Speech API: speech synthesis for bot replies and speech recognition for dictation.
+    (() => {
+      const root = document.querySelector('[data-component="chat"]');
+      const field = document.querySelector('#message');
+      const mic = document.querySelector('#speech-mic');
+      const mode = document.querySelector('#speech-mode');
+      const speakToggle = document.querySelector('#speech-speak');
+      const status = document.querySelector('#speech-status');
+      const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      let recognition = null;
+      let listening = false;
+      let finalTranscript = '';
+      let pendingInterim = '';
+      let pauseTimer = null;
+      let lastSpoken = '';
+
+      const setStatus = (message) => { if (status) status.textContent = message; };
+      const renderTranscript = (includeInterim) => {
+        const transcript = [finalTranscript.trim(), includeInterim ? pendingInterim.trim() : ''].filter(Boolean).join(' ').trim();
+        field.value = transcript.slice(0, 2000);
+        field.dispatchEvent(new Event('input', { bubbles: true }));
+      };
+
+      if (mic && !Recognition) {
+        mic.disabled = true;
+        mic.title = 'Este navegador não oferece SpeechRecognition. Tente Chrome ou Edge.';
+        setStatus('Reconhecimento de voz indisponível neste navegador');
+      }
+
+      if (Recognition) {
+        recognition = new Recognition();
+        recognition.lang = 'pt-BR';
+        recognition.continuous = true;
+        recognition.interimResults = true;
+        recognition.maxAlternatives = 1;
+
+        recognition.addEventListener('start', () => {
+          listening = true;
+          finalTranscript = '';
+          pendingInterim = '';
+          mic.textContent = 'Parar microfone';
+          mic.setAttribute('aria-pressed', 'true');
+          setStatus(mode.value === 'live' ? 'Ouvindo · transcrição ao vivo' : 'Ouvindo · transcrição após pausa');
+        });
+
+        recognition.addEventListener('result', (event) => {
+          let interim = '';
+          for (let i = event.resultIndex; i < event.results.length; i += 1) {
+            const result = event.results[i];
+            const text = result[0]?.transcript || '';
+            if (result.isFinal) {
+              finalTranscript = [finalTranscript.trim(), text.trim()].filter(Boolean).join(' ').trim();
+              interim = '';
+            } else {
+              interim += text;
+            }
+          }
+          pendingInterim = interim.trim();
+          if (mode.value === 'live') {
+            renderTranscript(true);
+          } else {
+            clearTimeout(pauseTimer);
+            if (pendingInterim) {
+              pauseTimer = setTimeout(() => {
+                renderTranscript(true);
+                setStatus('Pausa detectada · texto atualizado');
+              }, 700);
+            } else {
+              renderTranscript(false);
+            }
+          }
+          if (finalTranscript) {
+            renderTranscript(mode.value === 'live');
+          }
+        });
+
+        recognition.addEventListener('error', (event) => {
+          const messages = {
+            'not-allowed': 'Permissão de microfone negada',
+            'audio-capture': 'Nenhum microfone disponível',
+            'no-speech': 'Nenhuma fala detectada',
+            'network': 'Falha de rede no reconhecimento de voz'
+          };
+          setStatus(messages[event.error] || `Erro de reconhecimento: ${event.error}`);
+        });
+
+        recognition.addEventListener('end', () => {
+          listening = false;
+          clearTimeout(pauseTimer);
+          mic.textContent = 'Ativar microfone';
+          mic.setAttribute('aria-pressed', 'false');
+          if (finalTranscript || pendingInterim) renderTranscript(true);
+          setStatus('Microfone parado · revise o texto e envie');
+        });
+      }
+
+      mic?.addEventListener('click', () => {
+        if (!recognition) return;
+        if (listening) {
+          recognition.stop();
+          return;
+        }
+        try {
+          window.speechSynthesis?.cancel();
+          recognition.start();
+        } catch (error) {
+          setStatus(`Não foi possível iniciar o microfone: ${error.message}`);
+        }
+      });
+
+      mode?.addEventListener('change', () => {
+        if (!listening) setStatus(mode.value === 'live' ? 'Transcrição ao vivo selecionada' : 'Transcrição após pausa selecionada');
+      });
+
+      root?.addEventListener('datastar:ws-message', (event) => {
+        const payload = event.detail;
+        if (!speakToggle?.checked || payload?.role !== 'assistant' || typeof payload.text !== 'string' || !payload.text.trim()) return;
+        if (!('speechSynthesis' in window) || !('SpeechSynthesisUtterance' in window)) {
+          setStatus('Síntese de voz indisponível neste navegador');
+          return;
+        }
+        const text = payload.text.trim();
+        if (text === lastSpoken) return;
+        lastSpoken = text;
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'pt-BR';
+        utterance.rate = 1;
+        utterance.pitch = 1;
+        utterance.onstart = () => setStatus('Lendo a resposta do bot…');
+        utterance.onend = () => setStatus(listening ? 'Ouvindo…' : 'Resposta falada');
+        utterance.onerror = () => setStatus('Não foi possível falar a resposta');
+        window.speechSynthesis.speak(utterance);
+      });
+
+      // If recognition is started, stop any ongoing bot speech to avoid transcribing the speaker.
+      mic?.addEventListener('click', () => {
+        if (!listening) window.speechSynthesis?.cancel();
+      });
+    })();
   </script>
 </body>
 </html>
