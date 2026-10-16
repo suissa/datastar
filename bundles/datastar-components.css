@@ -61,6 +61,7 @@
   position: relative;
   z-index: 1;
   padding: 0 1rem 1rem;
+  height: auto;
 }
 
 .ui-accordion__content[hidden] {
