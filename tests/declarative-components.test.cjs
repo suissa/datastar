@@ -135,7 +135,7 @@ test('data-state changes on an item synchronize content and ARIA', async () => {
   dom.window.close()
 })
 
-test('unknown component names emit an extensibility event', () => {
+test('unknown component names emit an extensibility event', async () => {
   const dom = setup('<div id="custom" data-component="my-extension"></div>')
   let detail
   dom.window.document.querySelector('#custom').addEventListener(
@@ -146,6 +146,7 @@ test('unknown component names emit an extensibility event', () => {
   const element = dom.window.document.createElement('div')
   element.dataset.component = 'my-extension'
   dom.window.document.body.append(element)
+  await tick(dom.window)
   assert.equal(detail.component, 'my-extension')
   assert.equal(detail.element, element)
   dom.window.close()
