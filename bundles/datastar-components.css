@@ -13,6 +13,7 @@
 .ui-accordion__trigger {
   align-items: center;
   background: var(--ds-component-surface, transparent);
+  color: var(--ds-component-text, #1f2937);
   border: 0;
   cursor: pointer;
   display: flex;
@@ -42,4 +43,11 @@
 
 .ui-accordion__item.is-open {
   border-color: var(--ds-component-border-active, #64748b);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-accordion__content.animate__animated {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
 }

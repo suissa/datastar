@@ -61,6 +61,7 @@ test('opens an item on click and updates ARIA and content visibility', () => {
   assert.equal(document.querySelector('#item-a').dataset.state, 'open')
   assert.equal(document.querySelector('#trigger-a').getAttribute('aria-expanded'), 'true')
   assert.equal(document.querySelector('#content-a').hidden, false)
+  assert.ok(document.querySelector('#content-a').classList.contains('animate__slideInDown'))
   dom.window.close()
 })
 
@@ -70,6 +71,9 @@ test('single mode closes the previously open sibling', () => {
   document.querySelector('#trigger-a').dispatchEvent(new MouseEvent('click', { bubbles: true }))
   document.querySelector('#trigger-b').dispatchEvent(new MouseEvent('click', { bubbles: true }))
   assert.equal(document.querySelector('#item-a').dataset.state, 'closed')
+  assert.equal(document.querySelector('#content-a').hidden, false)
+  assert.ok(document.querySelector('#content-a').classList.contains('animate__slideOutUp'))
+  document.querySelector('#content-a').dispatchEvent(new dom.window.Event('animationend', { bubbles: true }))
   assert.equal(document.querySelector('#content-a').hidden, true)
   assert.equal(document.querySelector('#item-b').dataset.state, 'open')
   assert.equal(document.querySelector('#content-b').hidden, false)
