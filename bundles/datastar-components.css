@@ -60,6 +60,7 @@
 .ui-accordion__content {
   position: relative;
   z-index: 1;
+  box-sizing: border-box;
   padding: 0 1rem 1rem;
   height: auto;
 }
