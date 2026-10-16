@@ -28,9 +28,6 @@ const server = createServer(async (req, res) => {
     return
   }
 
-  // The browser loads this script from /bundles/... while the example server
-  // runs from examples/websocket-chat. Serve it explicitly instead of returning
-  // index.html for every HTTP request (which would make the JS fail to parse).
   if (url.pathname === '/bundles/datastar-more-actions.js') {
     try {
       const script = await readFile(resolve(repoRoot, 'bundles/datastar-more-actions.js'))
@@ -68,6 +65,7 @@ wss.on('connection', (ws) => {
   const channel = ws.channel
   if (!channels.has(channel)) channels.set(channel, new Set())
   channels.get(channel).add(ws)
+
   ws.send(JSON.stringify({ type: 'message', text: `Connected to #${channel}` }))
 
   ws.on('message', (raw) => {
@@ -77,10 +75,18 @@ wss.on('connection', (ws) => {
 
     const text = payload.text.trim().slice(0, 2000)
     if (!text) return
-    const frame = JSON.stringify({ type: 'message', text })
-    for (const client of channels.get(channel) || []) {
-      if (client.readyState === WebSocket.OPEN) client.send(frame)
-    }
+
+    // Simulate a chat assistant: acknowledge the user's message and answer
+    // with a deterministic response. The delay makes the round-trip visible.
+    const reply = `Servidor: recebi sua mensagem "${text}". Esta é uma resposta simulada do chat.`
+    const frame = JSON.stringify({ type: 'message', text: reply, role: 'assistant' })
+
+    setTimeout(() => {
+      const members = channels.get(channel) || new Set()
+      for (const client of members) {
+        if (client.readyState === WebSocket.OPEN) client.send(frame)
+      }
+    }, 350)
   })
 
   ws.on('close', () => {
