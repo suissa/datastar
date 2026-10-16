@@ -65,6 +65,23 @@ test('opens an item on click and updates ARIA and content visibility', () => {
   dom.window.close()
 })
 
+test('state observer does not cancel opening or closing animations', async () => {
+  const dom = setup(accordion())
+  const { document, MouseEvent } = dom.window
+  const trigger = document.querySelector('#trigger-a')
+  const content = document.querySelector('#content-a')
+
+  trigger.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+  await tick(dom.window)
+  assert.ok(content.classList.contains('animate__slideInDown'))
+
+  trigger.dispatchEvent(new MouseEvent('click', { bubbles: true }))
+  await tick(dom.window)
+  assert.ok(content.classList.contains('animate__slideOutUp'))
+
+  dom.window.close()
+})
+
 test('single mode closes the previously open sibling', () => {
   const dom = setup(accordion())
   const { document, MouseEvent } = dom.window
