@@ -5,12 +5,14 @@ on:
     paths:
       - "examples/http3/benchmark/**"
       - "examples/http3/benchmark-sample.json"
+      - "docs/transport/http3-benchmark-report.md"
       - ".github/workflows/http3-benchmark.yml"
   push:
     branches: [develop]
     paths:
       - "examples/http3/benchmark/**"
       - "examples/http3/benchmark-sample.json"
+      - "docs/transport/http3-benchmark-report.md"
       - ".github/workflows/http3-benchmark.yml"
   workflow_dispatch:
 
