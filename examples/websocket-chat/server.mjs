@@ -48,26 +48,30 @@ server.on('upgrade', (req, socket, head) => {
   })
 })
 
-// The chat catalog is an explicit server-side allowlist. Never accept component
-// names or component payloads directly from the browser.
+// A2UI v0.9 catalog allowlist: the browser selects "chat" with data-a2ui="chat".
+// The server sends only components from this catalog, never client-supplied component JSON.
+const A2UI_CATALOG_ID = 'https://datastar.local/a2ui/catalogs/chat'
 const a2uiCatalogs = {
   chat: {
-    'show-card': { type: 'card', title: 'Componente A2UI', text: 'Este cartão foi enviado pelo servidor usando o mesmo WebSocket do chat.', action: 'show-button', actionLabel: 'Pedir componente botão' },
-    'show-status': { type: 'badge', label: 'Status enviado pelo servidor: conectado' },
-    'show-metric': { type: 'metric', label: 'Mensagens processadas', value: '1', detail: 'Componente A2UI independente' },
-    'show-button': { type: 'button', label: 'Clique para receber um texto', action: 'show-text' },
-    'show-text': { type: 'text', text: 'O servidor recebeu o clique e enviou exatamente um componente A2UI.' }
+    'show-card': { component: 'Text', text: 'A2UI: este componente de texto foi enviado pelo servidor pelo WebSocket compartilhado.', variant: 'h2' },
+    'show-status': { component: 'Text', text: 'Status do servidor: conectado e respondendo pelo mesmo canal #chat.', variant: 'body' },
+    'show-metric': { component: 'Text', text: 'Métrica A2UI — mensagens processadas: 1.', variant: 'h3' },
+    'show-text': { component: 'Text', text: 'Clique recebido. O servidor enviou exatamente um componente A2UI nesta resposta.', variant: 'body' }
   }
 }
 
-function handleA2UIAction(ws, payload) {
-  if (typeof payload?.catalog !== 'string' || typeof payload?.action !== 'string') return
-  const component = a2uiCatalogs[payload.catalog]?.[payload.action]
-  if (!component || ws.readyState !== WebSocket.OPEN) return
+function sendA2UIAction(ws, payload) {
+  if (payload?.catalog !== 'chat' || typeof payload.action !== 'string') return
+  if (payload.surfaceId !== 'chat' || ws.readyState !== WebSocket.OPEN) return
+  const component = a2uiCatalogs.chat[payload.action]
+  if (!component) return
+
   ws.send(JSON.stringify({
-    type: 'a2ui-component',
-    catalog: payload.catalog,
-    component
+    version: 'v0.9',
+    updateComponents: {
+      surfaceId: 'chat',
+      components: [{ id: 'root', ...component }]
+    }
   }))
 }
 
@@ -90,12 +94,18 @@ wss.on('connection', (ws) => {
   if (!channels.has(channel)) channels.set(channel, new Set())
   channels.get(channel).add(ws)
   ws.send(JSON.stringify({ type: 'message', text: `Connected to #${channel}`, role: 'system' }))
+  if (channel === 'chat') {
+    ws.send(JSON.stringify({
+      version: 'v0.9',
+      createSurface: { surfaceId: 'chat', catalogId: A2UI_CATALOG_ID }
+    }))
+  }
 
   ws.on('message', (raw) => {
     let payload
     try { payload = JSON.parse(raw.toString()) } catch { return }
     if (payload?.type === 'a2ui-action') {
-      handleA2UIAction(ws, payload)
+      sendA2UIAction(ws, payload)
       return
     }
     if (payload?.type !== 'message' || typeof payload.text !== 'string') return
