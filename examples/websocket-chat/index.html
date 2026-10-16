@@ -29,7 +29,13 @@
       </header>
       <section class="mx-auto flex w-full max-w-3xl flex-1 flex-col px-4 pb-4 md:px-8" data-component="chat" data-on:load="@ws('chat')">
         <div class="flex flex-1 flex-col justify-end py-8">
-          <div class="mb-8 text-center"><div class="mx-auto mb-4 grid h-12 w-12 place-items-center rounded-2xl border border-white/10 bg-white/5 text-2xl">✳</div><h1 class="text-2xl font-semibold tracking-tight">Como posso ajudar?</h1><p class="mt-2 text-sm text-chat-muted">Chat de demonstração em tempo real.</p></div>
+          <div class="mb-8 text-center"><div class="mx-auto mb-4 grid h-12 w-12 place-items-center rounded-2xl border border-white/10 bg-white/5 text-2xl">✳</div><h1 class="text-2xl font-semibold tracking-tight">Como posso ajudar?</h1><p class="mt-2 text-sm text-chat-muted">Chat de demonstração em tempo real.</p>
+            <div class="mx-auto mt-5 flex max-w-2xl flex-wrap justify-center gap-2" aria-label="Mensagens de exemplo">
+              <button type="button" data-chat-prompt="Qual é a capital do Brasil?" class="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-left text-xs text-gray-200 transition hover:bg-white/10 sm:text-sm">Qual é a capital do Brasil?</button>
+              <button type="button" data-chat-prompt="Quanto é 2 + 2?" class="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-left text-xs text-gray-200 transition hover:bg-white/10 sm:text-sm">Quanto é 2 + 2?</button>
+              <button type="button" data-chat-prompt="Repita minha mensagem: teste do botão" class="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-left text-xs text-gray-200 transition hover:bg-white/10 sm:text-sm">Testar resposta com minha mensagem</button>
+            </div>
+          </div>
           <div data-ws-messages class="flex max-h-[52vh] min-h-28 flex-col overflow-y-auto px-1" aria-live="polite" aria-label="Mensagens do chat"></div>
         </div>
         <div class="sticky bottom-0 bg-chat-bg pb-3 pt-2">
@@ -44,6 +50,15 @@
     </main>
   </div>
   <script>
+    document.addEventListener('click', (event) => {
+      const button = event.target.closest('[data-chat-prompt]');
+      if (!button) return;
+      const field = document.querySelector('[data-component="chat"] [name="message"]');
+      if (!field || !field.form) return;
+      field.value = button.dataset.chatPrompt || '';
+      field.form.requestSubmit();
+    });
+
     document.addEventListener('keydown', (event) => {
       const field = event.target;
       if (field instanceof HTMLTextAreaElement && field.name === 'message' && event.key === 'Enter' && !event.shiftKey) {

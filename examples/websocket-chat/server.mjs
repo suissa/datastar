@@ -47,6 +47,20 @@ server.on('upgrade', (req, socket, head) => {
   })
 })
 
+function createReply(text) {
+  if (/capital do brasil/i.test(text)) {
+    return 'A capital do Brasil é Brasília.'
+  }
+  if (/2\s*\+\s*2|quanto é quatro/i.test(text)) {
+    return '2 + 2 = 4.'
+  }
+  const echoed = text.match(/repita minha mensagem:\s*(.*)/i)
+  if (echoed) {
+    return `Você pediu para repetir: “${echoed[1]}”. Recebi sua mensagem pelo WebSocket.`
+  }
+  return `Entendi sua mensagem: “${text}”. Esta resposta foi gerada pelo servidor de demonstração.`
+}
+
 wss.on('connection', (ws) => {
   const channel = ws.channel
   if (!channels.has(channel)) channels.set(channel, new Set())
@@ -60,9 +74,7 @@ wss.on('connection', (ws) => {
     const text = payload.text.trim().slice(0, 2000)
     if (!text) return
 
-    // Simulated chat assistant response. It is deliberately deterministic so
-    // the example demonstrates the complete client -> server -> client flow.
-    const reply = `Servidor: recebi sua mensagem "${text}". Esta é uma resposta simulada do chat.`
+    const reply = createReply(text)
     const frame = JSON.stringify({ type: 'message', text: reply, role: 'assistant' })
     setTimeout(() => {
       for (const client of channels.get(channel) || []) {
