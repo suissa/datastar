@@ -9,7 +9,8 @@
   const accordionCleanups = new WeakMap()
 
   const setState = (element, open) => {
-    element.dataset.state = open ? OPEN : CLOSED
+    const state = open ? OPEN : CLOSED
+    if (element.dataset.state !== state) element.dataset.state = state
     element.classList.toggle('is-open', open)
     element.classList.toggle('is-closed', !open)
   }
