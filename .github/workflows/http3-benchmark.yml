@@ -1,0 +1,47 @@
+name: HTTP/3 benchmark dashboard
+
+on:
+  pull_request:
+    paths:
+      - "examples/http3/benchmark/**"
+      - "examples/http3/benchmark-sample.json"
+      - ".github/workflows/http3-benchmark.yml"
+  push:
+    branches: [develop]
+    paths:
+      - "examples/http3/benchmark/**"
+      - "examples/http3/benchmark-sample.json"
+      - ".github/workflows/http3-benchmark.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  benchmark-harness:
+    name: Build and validate benchmark harness
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.23.x"
+          cache: false
+      - name: Resolve dependencies
+        working-directory: examples/http3/benchmark
+        run: go mod tidy
+      - name: Run unit tests
+        working-directory: examples/http3/benchmark
+        run: go test -v -race -count=1 ./...
+      - name: Vet Go code
+        working-directory: examples/http3/benchmark
+        run: go vet ./...
+      - name: Validate JSON fixtures
+        run: |
+          python3 -m json.tool examples/http3/benchmark/transport.json >/dev/null
+          python3 -m json.tool examples/http3/benchmark-sample.json >/dev/null
+      - name: Check dashboard and Datastar SSE hooks exist
+        run: |
+          grep -q 'DATASTAR benchmarks report' examples/http3/benchmark/dashboard.html
+          grep -q "data-on:click=\"@post('/datastar/benchmark')\"" examples/http3/benchmark/dashboard.html
+          grep -q 'datastar-patch-elements' examples/http3/benchmark/main.go
