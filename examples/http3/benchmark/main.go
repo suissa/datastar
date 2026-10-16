@@ -85,10 +85,12 @@ func main() {
 		ms,_:=strconv.Atoi(r.URL.Query().Get("interval"));if ms<0{ms=0};if ms>1000{ms=1000}
 		w.Header().Set("Content-Type","text/event-stream");w.Header().Set("Cache-Control","no-cache, no-transform");w.Header().Set("X-Accel-Buffering","no")
 		f,ok:=w.(http.Flusher);if !ok {http.Error(w,"flush unavailable",500);return}
-		for i:=0;i<n;i++ {if r.Context().Err()!=nil{return};fmt.Fprintf(w,"event: datastar-patch-elements
-data: {"elements":"<span data-benchmark-seq=\"%d\">event %d</span>"}
-
-",i,i);f.Flush();if ms>0{select{case <-r.Context().Done():return;case <-time.After(time.Duration(ms)*time.Millisecond):}}}
+		for i:=0;i<n;i++ {
+			if r.Context().Err()!=nil{return}
+			fmt.Fprintf(w,"event: datastar-patch-elements\ndata: {\"elements\":\"<span data-benchmark-seq='%d'>event %d</span>\"}\n\n",i,i)
+			f.Flush()
+			if ms>0 {select {case <-r.Context().Done():return;case <-time.After(time.Duration(ms)*time.Millisecond):}}
+		}
 	})
 	mux.HandleFunc("/api/benchmark",func(w http.ResponseWriter,r *http.Request){if r.Method!=http.MethodPost{http.Error(w,"POST required",405);return};cfg:=Settings{*rounds,*payload,*events,*interval};if err:=runBenchmark(r.Context(),*addr,cfg);err!=nil{http.Error(w,err.Error(),500);return};resultsHandler(w,r)})
 	mux.HandleFunc("/datastar/benchmark",func(w http.ResponseWriter,r *http.Request){
@@ -106,8 +108,7 @@ data: {"elements":"<span data-benchmark-seq=\"%d\">event %d</span>"}
 	h3Server:=&http3.Server{Handler:mux,TLSConfig:tlsConfig}
 	go func(){if e:=httpServer.ServeTLS(tcp,"","");e!=nil&&e!=http.ErrServerClosed{fmt.Fprintln(os.Stderr,"HTTP server:",e)}}()
 	go func(){if e:=h3Server.Serve(udp);e!=nil{fmt.Fprintln(os.Stderr,"HTTP/3 server:",e)}}()
-	fmt.Printf("Dashboard: https://%s/ (TCP + UDP). Local self-signed certificate; test only.
-",*addr)
+	fmt.Printf("Dashboard: https://%s/ (TCP + UDP). Local self-signed certificate; test only.\n",*addr)
 	select{}
 }
 func fatal(e error){fmt.Fprintln(os.Stderr,e);os.Exit(1)}
@@ -118,12 +119,14 @@ func makeCertificate()(tls.Certificate,error){
 	cert:=pem.EncodeToMemory(&pem.Block{Type:"CERTIFICATE",Bytes:der});priv:=pem.EncodeToMemory(&pem.Block{Type:"RSA PRIVATE KEY",Bytes:x509.MarshalPKCS1PrivateKey(key)})
 	return tls.X509KeyPair(cert,priv)
 }
-func patch(w io.Writer,title,detail string){html:=fmt.Sprintf("<div id="run-status" class="status-live"><strong>%s</strong><span>%s</span></div>",escape(title),escape(detail));html=strings.ReplaceAll(html,"\","\\");html=strings.ReplaceAll(html,"
-","\n");fmt.Fprintf(w,"event: datastar-patch-elements
-data: elements %s
-
-",html)}
-func escape(s string)string{r:=strings.NewReplacer("&","&amp;","<","&lt;",">","&gt;",""","&quot;","'","&#39;");return r.Replace(s)}
+func patch(w io.Writer,title,detail string) {
+	html:=fmt.Sprintf("<div id=\"run-status\" class=\"status-live\"><strong>%s</strong><span>%s</span></div>",escape(title),escape(detail))
+	fmt.Fprintf(w,"event: datastar-patch-elements\ndata: elements %s\n\n",html)
+}
+func escape(s string) string {
+	r:=strings.NewReplacer("&","&amp;","<","&lt;",">","&gt;","\"","&quot;","'","&#39;")
+	return r.Replace(s)
+}
 func resultsHandler(w http.ResponseWriter,r *http.Request){
 	path:=filepath.Join(root,"..","benchmark-results.json")
 	if b,e:=os.ReadFile(path);e==nil{w.Header().Set("Content-Type","application/json");w.Header().Set("Cache-Control","no-store");_,_=w.Write(b);return}
