@@ -167,8 +167,11 @@ func measureSSE(ctx context.Context,c *http.Client,base string,count,interval,ma
 	if resp.ProtoMajor!=major{return SSE{},fmt.Errorf("SSE expected HTTP/%d, got %s",major,resp.Proto)}
 	if !strings.HasPrefix(resp.Header.Get("Content-Type"),"text/event-stream"){return SSE{},fmt.Errorf("unexpected SSE content type %q",resp.Header.Get("Content-Type"))}
 	reader:=bufio.NewReader(resp.Body);got:=0;first:=0.0
-	for got<count{line,e:=reader.ReadString('
-');if e!=nil{return SSE{},fmt.Errorf("SSE event %d/%d: %w",got,count,e)};if strings.HasPrefix(line,"data:"){if got==0{first=float64(time.Since(start).Microseconds())/1000};got++}}
+	for got<count {
+		line,e:=reader.ReadString('\n')
+		if e!=nil{return SSE{},fmt.Errorf("SSE event %d/%d: %w",got,count,e)}
+		if strings.HasPrefix(line,"data:"){if got==0{first=float64(time.Since(start).Microseconds())/1000};got++}
+	}
 	d:=time.Since(start);sec:=d.Seconds();if sec<=0{sec=.000001}
 	return SSE{TimeToFirstEventMs:first,TotalDurationMs:float64(d.Microseconds())/1000,EventsPerSecond:round(float64(got)/sec),EventsReceived:got},nil
 }
