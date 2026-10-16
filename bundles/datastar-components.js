@@ -61,7 +61,59 @@
     element.addEventListener('animationend', onAnimationEnd)
   }
 
-  const animateContent = (content, open) => animateElement(content, open, true)
+  const contentTransitions = new WeakMap()
+
+  const animateContent = (content, open) => {
+    const previousTransition = contentTransitions.get(content)
+    if (previousTransition) {
+      content.removeEventListener('transitionend', previousTransition)
+      contentTransitions.delete(content)
+    }
+
+    content.hidden = false
+    content.style.overflow = 'hidden'
+    content.style.transition = 'height 300ms ease'
+    content.style.setProperty('--animate-duration', '300ms')
+
+    const finish = () => {
+      content.removeEventListener('transitionend', onHeightEnd)
+      contentTransitions.delete(content)
+      content.style.removeProperty('transition')
+      content.style.removeProperty('--animate-duration')
+      content.style.removeProperty('overflow')
+      if (open) {
+        content.style.height = 'auto'
+      } else if (content.dataset.state === CLOSED) {
+        content.hidden = true
+        content.style.removeProperty('height')
+      }
+    }
+
+    const onHeightEnd = (event) => {
+      if (event.target !== content || event.propertyName !== 'height') return
+      finish()
+    }
+
+    contentTransitions.set(content, onHeightEnd)
+    content.addEventListener('transitionend', onHeightEnd)
+
+    if (open) {
+      content.style.height = '0px'
+      void content.offsetHeight
+      const targetHeight = content.scrollHeight
+      requestAnimationFrame(() => {
+        content.style.height = `${targetHeight}px`
+      })
+      animateElement(content, true)
+    } else {
+      content.style.height = `${content.getBoundingClientRect().height}px`
+      void content.offsetHeight
+      requestAnimationFrame(() => {
+        content.style.height = '0px'
+      })
+      animateElement(content, false)
+    }
+  }
 
   const syncItem = (item, open, animate = false) => {
     const wasOpen = item.classList.contains('is-open')
