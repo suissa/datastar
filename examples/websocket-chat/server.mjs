@@ -8,43 +8,27 @@ const port = Number(process.env.PORT || 3000)
 const exampleDir = fileURLToPath(new URL('./', import.meta.url))
 const repoRoot = resolve(exampleDir, '../..')
 
-const MIME = {
-  '.html': 'text/html; charset=utf-8',
-  '.js': 'text/javascript; charset=utf-8',
-}
+const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8' }
 
 const server = createServer(async (req, res) => {
   const url = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`)
-
   if (url.pathname === '/') {
-    try {
-      const html = await readFile(resolve(exampleDir, 'index.html'))
-      res.writeHead(200, { 'content-type': MIME['.html'], 'cache-control': 'no-store' })
-      res.end(html)
-    } catch {
-      res.writeHead(500)
-      res.end('Unable to load chat example')
-    }
+    const html = await readFile(resolve(exampleDir, 'index.html'))
+    res.writeHead(200, { 'content-type': MIME['.html'], 'cache-control': 'no-store' })
+    res.end(html)
     return
   }
-
-  // The browser loads this script from /bundles/... while the example server
-  // runs from examples/websocket-chat. Serve it explicitly instead of returning
-  // index.html for every HTTP request (which would make the JS fail to parse).
   if (url.pathname === '/bundles/datastar-more-actions.js') {
     try {
       const script = await readFile(resolve(repoRoot, 'bundles/datastar-more-actions.js'))
       res.writeHead(200, { 'content-type': MIME['.js'], 'cache-control': 'no-store' })
       res.end(script)
     } catch {
-      res.writeHead(404)
-      res.end('Bundle not found')
+      res.writeHead(404); res.end('Bundle not found')
     }
     return
   }
-
-  res.writeHead(404)
-  res.end('Not found')
+  res.writeHead(404); res.end('Not found')
 })
 
 const wss = new WebSocketServer({ noServer: true })
@@ -57,7 +41,6 @@ server.on('upgrade', (req, socket, head) => {
     socket.destroy()
     return
   }
-
   wss.handleUpgrade(req, socket, head, (ws) => {
     ws.channel = url.searchParams.get('channel')
     wss.emit('connection', ws, req)
@@ -68,19 +51,24 @@ wss.on('connection', (ws) => {
   const channel = ws.channel
   if (!channels.has(channel)) channels.set(channel, new Set())
   channels.get(channel).add(ws)
-  ws.send(JSON.stringify({ type: 'message', text: `Connected to #${channel}` }))
+  ws.send(JSON.stringify({ type: 'message', text: `Connected to #${channel}`, role: 'system' }))
 
   ws.on('message', (raw) => {
     let payload
     try { payload = JSON.parse(raw.toString()) } catch { return }
     if (payload?.type !== 'message' || typeof payload.text !== 'string') return
-
     const text = payload.text.trim().slice(0, 2000)
     if (!text) return
-    const frame = JSON.stringify({ type: 'message', text })
-    for (const client of channels.get(channel) || []) {
-      if (client.readyState === WebSocket.OPEN) client.send(frame)
-    }
+
+    // Simulated chat assistant response. It is deliberately deterministic so
+    // the example demonstrates the complete client -> server -> client flow.
+    const reply = `Servidor: recebi sua mensagem "${text}". Esta é uma resposta simulada do chat.`
+    const frame = JSON.stringify({ type: 'message', text: reply, role: 'assistant' })
+    setTimeout(() => {
+      for (const client of channels.get(channel) || []) {
+        if (client.readyState === WebSocket.OPEN) client.send(frame)
+      }
+    }, 350)
   })
 
   ws.on('close', () => {
