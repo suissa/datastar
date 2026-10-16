@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Datastar Audio Player</title>
+  <link rel="stylesheet" href="../components/audio-player/audio-player.css">
+  <style>
+    :root { color-scheme: dark; font-family: Inter, system-ui, sans-serif; background: #101010; color: #f8fafc; }
+    body { margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 24px; box-sizing: border-box; }
+    main { width: min(100%, 1000px); }
+    h1 { margin: 0 0 8px; font-size: clamp(24px, 4vw, 36px); }
+    p { color: #a7a7a7; margin: 0 0 28px; }
+  </style>
+  <script type="module" src="../components/audio-player/audio-player.js"></script>
+</head>
+<body>
+  <main>
+    <h1>Audio Player</h1>
+    <p>A responsive playlist player built with native Web Components.</p>
+    <ds-audio-player volume="0.75">
+      <ds-audio-track
+        src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3"
+        title="SoundHelix Song 1"
+        artist="SoundHelix"
+        album="Demo Collection"
+        cover="https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=240&h=240&fit=crop">
+      </ds-audio-track>
+      <ds-audio-track
+        src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3"
+        title="SoundHelix Song 2"
+        artist="SoundHelix"
+        album="Demo Collection"
+        cover="https://images.unsplash.com/photo-1516280440614-37939bbacd81?w=240&h=240&fit=crop">
+      </ds-audio-track>
+      <ds-audio-track
+        src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3"
+        title="SoundHelix Song 3"
+        artist="SoundHelix"
+        album="Demo Collection"
+        cover="https://images.unsplash.com/photo-1506157786151-b8491531f063?w=240&h=240&fit=crop">
+      </ds-audio-track>
+    </ds-audio-player>
+  </main>
+</body>
+</html>
