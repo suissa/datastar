@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Datastar WebSocket chat</title>
+  <script type="module" src="../../bundles/datastar.js"></script>
+  <style>
+    body { max-width: 44rem; margin: 3rem auto; padding: 0 1rem; font: 1rem/1.5 system-ui; }
+    [data-ws-messages] { min-height: 12rem; padding: 1rem; border: 1px solid #bbb; border-radius: .5rem; }
+    [data-ws-messages] p { margin: .25rem 0; overflow-wrap: anywhere; }
+    form { display: flex; gap: .5rem; margin-top: 1rem; }
+    input { flex: 1; min-width: 0; padding: .7rem; }
+    button { padding: .7rem 1rem; }
+  </style>
+</head>
+<body>
+  <h1>Datastar WebSocket chat</h1>
+  <p>Open this page in two tabs to test channel broadcast.</p>
+  <div data-component="chat" data-on:load="@ws('chat')">
+    <div data-ws-messages aria-live="polite"></div>
+    <form>
+      <input name="message" autocomplete="off" placeholder="Write a message" aria-label="Message">
+      <button type="submit">Send</button>
+    </form>
+  </div>
+</body>
+</html>
