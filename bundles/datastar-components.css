@@ -1,0 +1,45 @@
+/* Class-first styles for the declarative accordion component. */
+.ui-accordion {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.ui-accordion__item {
+  border: 1px solid var(--ds-component-border, #d1d5db);
+  border-radius: 0.5rem;
+  overflow: clip;
+}
+
+.ui-accordion__trigger {
+  align-items: center;
+  background: var(--ds-component-surface, transparent);
+  border: 0;
+  cursor: pointer;
+  display: flex;
+  font: inherit;
+  justify-content: space-between;
+  padding: 0.875rem 1rem;
+  text-align: left;
+  width: 100%;
+}
+
+.ui-accordion__trigger::after {
+  content: "+";
+  margin-inline-start: 1rem;
+}
+
+.ui-accordion__trigger.is-open::after {
+  content: "−";
+}
+
+.ui-accordion__content {
+  padding: 0 1rem 1rem;
+}
+
+.ui-accordion__content[hidden] {
+  display: none;
+}
+
+.ui-accordion__item.is-open {
+  border-color: var(--ds-component-border-active, #64748b);
+}
