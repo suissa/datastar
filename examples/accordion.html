@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>Datastar Components — Accordion</title>
+  <link rel="stylesheet" href="../components/accordion/accordion.css">
+  <style>
+    :root { color-scheme: dark; font-family: Inter, ui-sans-serif, system-ui, sans-serif; background: #080d17; color: #e8eef8; }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; background: radial-gradient(ellipse at 15% 0%, #122b45 0, transparent 42%), #080d17; }
+    main { width: min(900px, calc(100% - 2rem)); margin: 0 auto; padding: 4rem 0 5rem; }
+    .eyebrow { color: #00d2fd; font: 700 .75rem/1.4 ui-monospace, monospace; letter-spacing: .16em; text-transform: uppercase; }
+    h1 { margin: .75rem 0; font-size: clamp(2.25rem, 6vw, 4rem); letter-spacing: -.055em; }
+    .intro { max-width: 650px; color: #a7b4c9; line-height: 1.7; }
+    .layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1.25rem; margin-top: 2.5rem; }
+    .panel { min-width: 0; padding: 1.5rem; border: 1px solid #283449; border-radius: 1rem; background: rgb(12 20 34 / 88%); box-shadow: 0 18px 55px #0003; }
+    h2 { margin: 0 0 .35rem; font-size: 1.1rem; }
+    .hint { margin: 0 0 1rem; color: #8292aa; font-size: .85rem; line-height: 1.5; }
+    code { color: #00d2fd; font-size: .85em; }
+    .status { margin-top: 1rem; padding: .75rem; border-radius: .5rem; background: #111d30; color: #9daec6; font: .8rem/1.6 ui-monospace, monospace; overflow-wrap: anywhere; }
+    .status strong { color: #00d2fd; }
+    a { color: #00d2fd; }
+    @media (max-width: 680px) { main { padding-top: 2.5rem; } .layout { grid-template-columns: 1fr; } .panel { padding: 1.1rem; } }
+  </style>
+  <script type="module" src="../components/accordion/accordion.js"></script>
+</head>
+<body>
+  <main>
+    <div class="eyebrow">Datastar Components / 001</div>
+    <h1>Accordion</h1>
+    <p class="intro">A composable, accessible disclosure component inspired by the Radix UI Accordion API, implemented as native Web Components. No React dependency.</p>
+
+    <div class="layout">
+      <section class="panel">
+        <h2>Single</h2>
+        <p class="hint">One section at a time. The open section can be collapsed.</p>
+        <ds-accordion id="single-demo" type="single" collapsible default-value="installation">
+          <ds-accordion-item value="installation">
+            <ds-accordion-header><ds-accordion-trigger>How do I install it?</ds-accordion-trigger></ds-accordion-header>
+            <ds-accordion-content><p>Load <code>accordion.css</code> and <code>accordion.js</code> from your project, then compose the custom elements in your HTML.</p></ds-accordion-content>
+          </ds-accordion-item>
+          <ds-accordion-item value="datastar">
+            <ds-accordion-header><ds-accordion-trigger>Does it work with Datastar?</ds-accordion-trigger></ds-accordion-header>
+            <ds-accordion-content><p>Yes. It is framework-independent and can sit beside Datastar attributes and server-rendered HTML.</p></ds-accordion-content>
+          </ds-accordion-item>
+          <ds-accordion-item value="accessibility">
+            <ds-accordion-header><ds-accordion-trigger>What about accessibility?</ds-accordion-trigger></ds-accordion-header>
+            <ds-accordion-content><p>Triggers expose expanded state and panel relationships, support keyboard navigation, and retain visible focus indicators.</p></ds-accordion-content>
+          </ds-accordion-item>
+        </ds-accordion>
+        <div class="status" id="single-status" aria-live="polite">value: installation</div>
+      </section>
+
+      <section class="panel">
+        <h2>Multiple</h2>
+        <p class="hint">Open any number of sections. Try opening all three.</p>
+        <ds-accordion id="multiple-demo" type="multiple" default-value="events,styling">
+          <ds-accordion-item value="events">
+            <ds-accordion-header><ds-accordion-trigger>Value change events</ds-accordion-trigger></ds-accordion-header>
+            <ds-accordion-content><p>The root emits a bubbling <code>value-change</code> event. Read the selected value from <code>event.detail.value</code>.</p></ds-accordion-content>
+          </ds-accordion-item>
+          <ds-accordion-item value="styling">
+            <ds-accordion-header><ds-accordion-trigger>Custom styling</ds-accordion-trigger></ds-accordion-header>
+            <ds-accordion-content><p>Override the CSS custom properties <code>--ds-accordion-accent</code>, <code>--ds-accordion-border</code>, and <code>--ds-accordion-foreground</code>.</p></ds-accordion-content>
+          </ds-accordion-item>
+          <ds-accordion-item value="disabled" disabled>
+            <ds-accordion-header><ds-accordion-trigger>This item is disabled</ds-accordion-trigger></ds-accordion-header>
+            <ds-accordion-content><p>This content cannot be opened by user interaction.</p></ds-accordion-content>
+          </ds-accordion-item>
+        </ds-accordion>
+        <div class="status" id="multiple-status" aria-live="polite">value: [events, styling]</div>
+      </section>
+    </div>
+    <p class="intro">Keyboard: <code>↑</code>/<code>↓</code>, <code>Home</code>, <code>End</code>. Open the browser console or inspect the status fields to test state changes.</p>
+  </main>
+  <script>
+    const single = document.querySelector('#single-demo');
+    const multiple = document.querySelector('#multiple-demo');
+    single.addEventListener('value-change', (event) => {
+      document.querySelector('#single-status').textContent = 'value: ' + (event.detail.value || '(none)');
+    });
+    multiple.addEventListener('value-change', (event) => {
+      document.querySelector('#multiple-status').textContent = 'value: [' + event.detail.value.join(', ') + ']';
+    });
+  </script>
+</body>
+</html>
