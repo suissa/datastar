@@ -117,8 +117,7 @@ attribute({
       case 'accordion':
         return initializeAccordion(el)
       case 'accordion-item':
-        el.classList.add('ui-accordion__item')
-        setState(el, el.dataset.state === OPEN)
+        syncItem(el, el.dataset.state === OPEN)
         break
       case 'accordion-trigger':
         el.classList.add('ui-accordion__trigger')
