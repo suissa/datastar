@@ -107,6 +107,23 @@
     const onClick = (event) => {
       const target = event.target
       if (!(target instanceof Element)) return
+
+      const action = target.closest('[data-accordion-action]')
+      if (action && root.contains(action)) {
+        const mode = root.dataset.accordionItemMode || root.dataset.accordionMode || 'single'
+        const actionName = action.dataset.accordionAction
+
+        if (actionName === 'openAll') {
+          if (mode !== 'multiple') return
+          for (const item of items()) syncItem(item, true, true)
+          return
+        }
+        if (actionName === 'closeAll') {
+          for (const item of items()) syncItem(item, false, true)
+          return
+        }
+      }
+
       const trigger = target.closest('[data-component="accordion-trigger"]')
       if (!trigger || !root.contains(trigger)) return
       if (
@@ -118,7 +135,8 @@
       if (!item || !root.contains(item)) return
       const wasOpen = item.dataset.state === OPEN
 
-      if ((root.dataset.accordionMode || 'single') === 'single') {
+      const mode = root.dataset.accordionItemMode || root.dataset.accordionMode || 'single'
+      if (mode === 'single') {
         for (const sibling of items()) {
           if (sibling !== item) syncItem(sibling, false, true)
         }

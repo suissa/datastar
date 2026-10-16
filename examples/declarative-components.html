@@ -1,43 +1,145 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" class="h-full">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Datastar declarative components</title>
+  <script>
+    tailwind = { config: { darkMode: 'class' } }
+  </script>
+  <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
   <link rel="stylesheet" href="../bundles/datastar-components.css">
   <script type="module" src="../bundles/datastar.js"></script>
   <script defer src="../bundles/datastar-components.js"></script>
+  <script>
+    (() => {
+      const saved = localStorage.getItem('datastar-example-theme')
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+      document.documentElement.classList.toggle('dark', saved ? saved === 'dark' : prefersDark)
+    })()
+  </script>
 </head>
-<body>
-  <main>
-    <h1>Declarative Accordion</h1>
-    <p>The interpreter coordinates state and classes; CSS owns presentation.</p>
+<body class="min-h-full bg-slate-50 text-slate-900 antialiased transition-colors dark:bg-slate-950 dark:text-slate-100">
+  <main class="mx-auto max-w-4xl px-4 py-10 sm:px-6 lg:px-8">
+    <header class="mb-10 flex flex-col gap-5 border-b border-slate-200 pb-8 dark:border-slate-800 sm:flex-row sm:items-start sm:justify-between">
+      <div>
+        <p class="mb-2 text-sm font-semibold uppercase tracking-[0.2em] text-sky-600 dark:text-sky-400">Datastar · Declarative UI</p>
+        <h1 class="text-3xl font-bold tracking-tight sm:text-4xl">Accordion examples</h1>
+        <p class="mt-3 max-w-2xl text-base leading-7 text-slate-600 dark:text-slate-400">
+          Explore single-item and multiple-item behavior, with animated transitions and theme support.
+        </p>
+      </div>
+      <button id="theme-toggle" type="button" class="inline-flex shrink-0 items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-800 shadow-sm transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-sky-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800">
+        Toggle light / dark
+      </button>
+    </header>
 
-    <section data-component="accordion" data-accordion-mode="single">
-      <article data-component="accordion-item" data-state="open">
-        <h2>
-          <button type="button" data-component="accordion-trigger" aria-expanded="true">
-            What is Datastar?
-          </button>
-        </h2>
-        <div data-component="accordion-content">
-          Datastar combines declarative frontend reactivity with server-driven HTML updates.
-        </div>
-      </article>
+    <section class="mb-10 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-7">
+      <div class="mb-5">
+        <span class="text-xs font-bold uppercase tracking-widest text-sky-600 dark:text-sky-400">Mode: single</span>
+        <h2 class="mt-2 text-xl font-semibold">Only one item can stay open</h2>
+        <p class="mt-1 text-sm leading-6 text-slate-600 dark:text-slate-400">Opening an item closes the previously open item. “Close all” is available, but “Open all” is intentionally ignored in single mode.</p>
+      </div>
 
-      <article data-component="accordion-item" data-state="closed">
-        <h2>
-          <button type="button" data-component="accordion-trigger" aria-expanded="false">
-            Does this require a component-specific JavaScript file?
-          </button>
-        </h2>
-        <div data-component="accordion-content" hidden>
-          No. The generic interpreter recognizes the component declaration and orchestrates
-          classes, state attributes, ARIA attributes, and click events.
+      <section data-component="accordion" data-accordion-item-mode="single" class="space-y-3">
+        <article data-component="accordion-item" data-state="open" class="rounded-xl border border-slate-200 dark:border-slate-700">
+          <h3 class="m-0">
+            <button type="button" data-component="accordion-trigger" aria-expanded="true" class="rounded-xl font-medium transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-sky-500 dark:hover:bg-slate-800">
+              What is Datastar?
+            </button>
+          </h3>
+          <div data-component="accordion-content" class="text-sm leading-7 text-slate-600 dark:text-slate-300">
+            Datastar combines declarative frontend reactivity with server-driven HTML updates.
+          </div>
+        </article>
+
+        <article data-component="accordion-item" data-state="closed" class="rounded-xl border border-slate-200 dark:border-slate-700">
+          <h3 class="m-0">
+            <button type="button" data-component="accordion-trigger" aria-expanded="false" class="font-medium transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-sky-500 dark:hover:bg-slate-800">
+              Does every item have independent state?
+            </button>
+          </h3>
+          <div data-component="accordion-content" hidden class="text-sm leading-7 text-slate-600 dark:text-slate-300">
+            Yes. Each item exposes its state through data-state="open" or data-state="closed", while single mode enforces at most one open item within the accordion.
+          </div>
+        </article>
+
+        <article data-component="accordion-item" data-state="closed" class="rounded-xl border border-slate-200 dark:border-slate-700">
+          <h3 class="m-0">
+            <button type="button" data-component="accordion-trigger" aria-expanded="false" class="font-medium transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-sky-500 dark:hover:bg-slate-800">
+              Can content be inserted dynamically?
+            </button>
+          </h3>
+          <div data-component="accordion-content" hidden class="text-sm leading-7 text-slate-600 dark:text-slate-300">
+            Yes. The interpreter observes DOM changes and initializes declarative components added later, including server-patched HTML.
+          </div>
+        </article>
+
+        <div class="flex justify-end pt-2">
+          <button type="button" data-accordion-action="closeAll" class="rounded-lg px-3 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 hover:text-slate-950 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white">Close all</button>
         </div>
-      </article>
+      </section>
     </section>
+
+    <section class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-7">
+      <div class="mb-5">
+        <span class="text-xs font-bold uppercase tracking-widest text-violet-600 dark:text-violet-400">Mode: multiple</span>
+        <h2 class="mt-2 text-xl font-semibold">Open any number of items</h2>
+        <p class="mt-1 text-sm leading-6 text-slate-600 dark:text-slate-400">Items toggle independently. “Open all” is enabled only for multiple mode.</p>
+      </div>
+
+      <section data-component="accordion" data-accordion-item-mode="multiple" class="space-y-3">
+        <article data-component="accordion-item" data-state="closed" class="rounded-xl border border-slate-200 dark:border-slate-700">
+          <h3 class="m-0">
+            <button type="button" data-component="accordion-trigger" aria-expanded="false" class="font-medium transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-violet-500 dark:hover:bg-slate-800">
+              What does multiple mode change?
+            </button>
+          </h3>
+          <div data-component="accordion-content" hidden class="text-sm leading-7 text-slate-600 dark:text-slate-300">
+            It allows several items to remain open at the same time. Opening or closing one item does not change the state of its siblings.
+          </div>
+        </article>
+
+        <article data-component="accordion-item" data-state="closed" class="rounded-xl border border-slate-200 dark:border-slate-700">
+          <h3 class="m-0">
+            <button type="button" data-component="accordion-trigger" aria-expanded="false" class="font-medium transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-violet-500 dark:hover:bg-slate-800">
+              What does Open all do?
+            </button>
+          </h3>
+          <div data-component="accordion-content" hidden class="text-sm leading-7 text-slate-600 dark:text-slate-300">
+            It opens every item in this accordion with the same slide-in animation. The action is ignored if the accordion mode is single.
+          </div>
+        </article>
+
+        <article data-component="accordion-item" data-state="closed" class="rounded-xl border border-slate-200 dark:border-slate-700">
+          <h3 class="m-0">
+            <button type="button" data-component="accordion-trigger" aria-expanded="false" class="font-medium transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-violet-500 dark:hover:bg-slate-800">
+              Are animations accessible?
+            </button>
+          </h3>
+          <div data-component="accordion-content" hidden class="text-sm leading-7 text-slate-600 dark:text-slate-300">
+            The slide transitions use animate.css. The stylesheet also reduces animation duration when the operating system requests reduced motion.
+          </div>
+        </article>
+
+        <div class="flex flex-wrap justify-end gap-2 pt-2">
+          <button type="button" data-accordion-action="closeAll" class="rounded-lg px-3 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 hover:text-slate-950 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white">Close all</button>
+          <button type="button" data-accordion-action="openAll" class="rounded-lg bg-violet-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900">Open all</button>
+        </div>
+      </section>
+    </section>
+
+    <p class="mt-8 text-center text-xs leading-5 text-slate-500 dark:text-slate-500">
+      Tailwind CSS CDN · animate.css · Datastar declarative component interpreter
+    </p>
   </main>
+
+  <script>
+    document.getElementById('theme-toggle').addEventListener('click', () => {
+      const isDark = document.documentElement.classList.toggle('dark')
+      localStorage.setItem('datastar-example-theme', isDark ? 'dark' : 'light')
+    })
+  </script>
 </body>
 </html>

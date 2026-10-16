@@ -63,4 +63,6 @@ Supported component names are `accordion`, `accordion-item`, `accordion-trigger`
 
 The interpreter uses a MutationObserver so component declarations in HTML added later (including server-patched HTML) are initialized too. It updates `data-state`, ARIA attributes, and classes such as `ui-accordion__item`, `ui-accordion__trigger`, `ui-accordion__content`, `is-open`, and `is-closed`. CSS controls presentation. It does not require a separate JavaScript file for each component.
 
+Set `data-accordion-item-mode="single"` on the accordion root to allow only one open item, or `data-accordion-item-mode="multiple"` to allow several. The older `data-accordion-mode` attribute remains supported for compatibility. Add a button with `data-accordion-action="openAll"` to open every item in multiple mode; the action is ignored in single mode. `data-accordion-action="closeAll"` closes every item in either mode.
+
 The TypeScript plugin is also registered in `library/src/bundles/datastar.ts`, so it is included when the Datastar library bundle is rebuilt. The standalone `bundles/datastar-components.js` is provided for testing the interpreter before rebuilding the main generated bundle.
