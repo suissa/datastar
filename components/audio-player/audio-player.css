@@ -1,0 +1,150 @@
+/* Spotify-inspired audio player UI; independent from any streaming service. */
+ds-audio-player {
+  display: block;
+  color: #f8fafc;
+  font: 14px/1.4 Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --ds-player-accent: #1ed760;
+  --ds-player-muted: #a7a7a7;
+  --ds-player-surface: #181818;
+  --ds-player-border: #303030;
+}
+.ds-player {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 1.4fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 24px;
+  padding: 16px 20px;
+  background: var(--ds-player-surface);
+  border: 1px solid var(--ds-player-border);
+  border-radius: 14px;
+  box-shadow: 0 12px 40px rgb(0 0 0 / 22%);
+}
+.ds-player button,
+.ds-player input { font: inherit; }
+.ds-player button { -webkit-tap-highlight-color: transparent; }
+.ds-player__track, .ds-player__extras, .ds-player__controls, .ds-player__timeline {
+  display: flex;
+  align-items: center;
+}
+.ds-player__track { min-width: 0; gap: 12px; }
+.ds-player__cover {
+  display: grid;
+  flex: 0 0 56px;
+  width: 56px;
+  height: 56px;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 6px;
+  background: linear-gradient(135deg, #384d43, #1ed760 120%);
+  color: #071b0d;
+  font-size: 32px;
+}
+.ds-player__cover img { width: 100%; height: 100%; object-fit: cover; }
+.ds-player__meta { min-width: 0; }
+.ds-player__title, .ds-player__artist { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ds-player__title { color: #fff; font-weight: 650; }
+.ds-player__artist { margin-top: 3px; color: var(--ds-player-muted); font-size: 12px; }
+.ds-player__main { min-width: 0; }
+.ds-player__controls { justify-content: center; gap: clamp(8px, 1.5vw, 20px); }
+.ds-player__icon, .ds-player__play {
+  display: inline-grid;
+  flex: 0 0 auto;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ds-player-muted);
+  cursor: pointer;
+  transition: color 120ms ease, transform 120ms ease;
+}
+.ds-player__icon { width: 30px; height: 30px; }
+.ds-player__icon svg { width: 18px; height: 18px; }
+.ds-player__icon:hover, .ds-player__icon.is-active { color: var(--ds-player-accent); }
+.ds-player__icon:active, .ds-player__play:active { transform: scale(.94); }
+.ds-player__icon[data-repeat="one"]::after {
+  content: "1";
+  position: absolute;
+  margin: 12px 0 0 14px;
+  border-radius: 50%;
+  background: var(--ds-player-accent);
+  color: #111;
+  font-size: 8px;
+  font-weight: 800;
+  line-height: 11px;
+  width: 11px;
+  height: 11px;
+}
+.ds-player__play {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: #fff;
+  color: #111;
+}
+.ds-player__play:hover { background: var(--ds-player-accent); transform: scale(1.04); }
+.ds-player__play svg { width: 19px; height: 19px; fill: currentColor; stroke-width: 0; }
+.ds-player__timeline { gap: 10px; margin-top: 10px; color: var(--ds-player-muted); font-size: 11px; font-variant-numeric: tabular-nums; }
+.ds-player__range {
+  min-width: 0;
+  height: 4px;
+  margin: 0;
+  border-radius: 99px;
+  background: #535353;
+  accent-color: var(--ds-player-accent);
+  cursor: pointer;
+}
+.ds-player__range:hover { accent-color: var(--ds-player-accent); }
+.ds-player__seek { flex: 1; width: 100%; }
+.ds-player__extras { justify-content: flex-end; gap: 10px; }
+.ds-player__volume-icon { display: grid; place-items: center; color: var(--ds-player-muted); }
+.ds-player__volume-icon svg { width: 18px; height: 18px; }
+.ds-player__volume { width: min(100px, 35%); }
+.ds-player__like { font-size: 21px; }
+.ds-player__like.is-liked { color: var(--ds-player-accent); }
+.ds-player__playlist {
+  grid-column: 1 / -1;
+  max-height: 260px;
+  overflow: auto;
+  border-top: 1px solid var(--ds-player-border);
+  padding-top: 8px;
+}
+.ds-player__playlist-item {
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr) minmax(60px, .7fr);
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 9px 10px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: #e5e7eb;
+  text-align: left;
+  cursor: pointer;
+}
+.ds-player__playlist-item:hover { background: #2a2a2a; }
+.ds-player__playlist-item.is-current { color: var(--ds-player-accent); }
+.ds-player__playlist-number { color: var(--ds-player-muted); text-align: center; }
+.ds-player__playlist-copy { display: grid; min-width: 0; }
+.ds-player__playlist-copy > span, .ds-player__playlist-album { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ds-player__playlist-copy small { color: var(--ds-player-muted); font-size: 11px; }
+.ds-player__playlist-album { color: var(--ds-player-muted); font-size: 12px; }
+.ds-player__empty { grid-column: 1 / -1; color: #fca5a5; }
+.ds-player button:focus-visible, .ds-player input:focus-visible { outline: 2px solid var(--ds-player-accent); outline-offset: 3px; }
+.ds-player [hidden] { display: none !important; }
+
+@media (max-width: 700px) {
+  .ds-player { grid-template-columns: minmax(0, 1fr) auto; gap: 14px; padding: 14px; }
+  .ds-player__track { grid-column: 1; }
+  .ds-player__main { grid-column: 1 / -1; grid-row: 2; }
+  .ds-player__extras { grid-column: 2; grid-row: 1; }
+  .ds-player__volume-icon, .ds-player__volume { display: none; }
+  .ds-player__cover { flex-basis: 48px; width: 48px; height: 48px; }
+  .ds-player__controls { gap: clamp(12px, 5vw, 28px); }
+  .ds-player__playlist-item { grid-template-columns: 22px minmax(0, 1fr); }
+  .ds-player__playlist-album { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ds-player * { transition-duration: 0.01ms !important; }
+}
