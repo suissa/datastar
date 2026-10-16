@@ -160,7 +160,7 @@ class DatastarAccordion extends HTMLElement {
 
 class DatastarAccordionItem extends HTMLElement {}
 class DatastarAccordionHeader extends HTMLElement {}
-class DatastarAccordionTrigger extends HTMLButtonElement {}
+class DatastarAccordionTrigger extends HTMLElement {}
 class DatastarAccordionContent extends HTMLElement {}
 
 if (!customElements.get(ROOT)) customElements.define(ROOT, DatastarAccordion);
@@ -173,6 +173,12 @@ if (!customElements.get(TRIGGER)) {
       if (this.tagName.toLowerCase() !== TRIGGER) return;
       this.setAttribute('role', 'button');
       if (!this.hasAttribute('tabindex')) this.tabIndex = 0;
+      this.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          this.click();
+        }
+      });
     }
   });
 }
