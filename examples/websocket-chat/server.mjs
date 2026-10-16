@@ -37,7 +37,7 @@ const channels = new Map()
 server.on('upgrade', (req, socket, head) => {
   const url = new URL(req.url || '/', 'http://localhost')
   if (url.pathname !== '/ws' || !url.searchParams.get('channel')) {
-    socket.write('HTTP/1.1 404 Not Found\\r\\nConnection: close\\r\\n\\r\\n')
+    socket.write('HTTP/1.1 404 Not Found\r\nConnection: close\r\n\r\n')
     socket.destroy()
     return
   }
@@ -51,10 +51,10 @@ function createReply(text) {
   if (/capital do brasil/i.test(text)) {
     return 'A capital do Brasil é Brasília.'
   }
-  if (/2\\s*\\+\\s*2|quanto é quatro/i.test(text)) {
+  if (/2\s*\+\s*2|quanto é quatro/i.test(text)) {
     return '2 + 2 = 4.'
   }
-  const echoed = text.match(/repita minha mensagem:\\s*(.*)/i)
+  const echoed = text.match(/repita minha mensagem:\s*(.*)/i)
   if (echoed) {
     return `Você pediu para repetir: “${echoed[1]}”. Recebi sua mensagem pelo WebSocket.`
   }
