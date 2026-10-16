@@ -2,6 +2,7 @@
   "name": "datastar-websocket-chat-example",
   "private": true,
   "type": "module",
+  "scripts": { "start": "node server.mjs" },
   "scripts": {
     "start": "node server.mjs",
     "check": "node --check server.mjs && node --check ../../bundles/datastar-more-actions.js && node --check ../../bundles/datastar-a2ui.js"
