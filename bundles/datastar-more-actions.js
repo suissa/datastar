@@ -58,6 +58,12 @@
     };
     renderers.set(el, appendMessage);
 
+    const sendCustomPayload = (event) => {
+      if (!event.detail || socket.readyState !== WebSocket.OPEN) return;
+      socket.send(JSON.stringify(event.detail));
+    };
+    el.addEventListener('datastar:ws-send', sendCustomPayload);
+
     socket.addEventListener('open', () => setStatus('Conectado', 'connected'));
     socket.addEventListener('close', () => setStatus('Desconectado', 'idle'));
     socket.addEventListener('error', () => setStatus('Erro de conexão', 'error'));
@@ -77,6 +83,7 @@
       cleanups.delete(el);
       sockets.delete(el);
       renderers.delete(el);
+      el.removeEventListener('datastar:ws-send', sendCustomPayload);
       if (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING) {
         socket.close(1000, 'Element removed');
       }

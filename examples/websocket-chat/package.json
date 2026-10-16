@@ -2,6 +2,12 @@
   "name": "datastar-websocket-chat-example",
   "private": true,
   "type": "module",
-  "scripts": { "start": "node server.mjs" },
-  "dependencies": { "ws": "^8.18.0" }
+  "scripts": {
+    "start": "node server.mjs",
+    "check": "node --check server.mjs && node --check ../../bundles/datastar-more-actions.js && node --check ../../bundles/datastar-a2ui.js"
+  },
+  "dependencies": {
+    "@copilotkit/runtime": "^1.79.1",
+    "ws": "^8.18.0"
+  }
 }
