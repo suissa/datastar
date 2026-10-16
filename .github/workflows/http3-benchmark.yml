@@ -36,6 +36,22 @@ jobs:
       - name: Vet Go code
         working-directory: examples/http3/benchmark
         run: go vet ./...
+      - name: Run live HTTP/2 + HTTP/3 + SSE benchmark integration
+        working-directory: examples/http3/benchmark
+        run: |
+          set -euo pipefail
+          go run . -addr 127.0.0.1:18443 -rounds 3 -payload 1024 -events 4 -event-interval-ms 1 >/tmp/datastar-benchmark.log 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          ready=0
+          for i in $(seq 1 60); do
+            if curl -kfsS https://127.0.0.1:18443/ -o /dev/null; then ready=1; break; fi
+            sleep 1
+          done
+          if [ "$ready" -ne 1 ]; then cat /tmp/datastar-benchmark.log; exit 1; fi
+          curl -kfsS -X POST https://127.0.0.1:18443/api/benchmark >/tmp/datastar-benchmark-result.json
+          python3 -c 'import json; r=json.load(open("/tmp/datastar-benchmark-result.json")); assert r["mode"] == "measured"; assert r["results"]["http2"]["sse"]["eventsReceived"] == 4; assert r["results"]["http3"]["sse"]["eventsReceived"] == 4; print("Live HTTP/2, HTTP/3 and SSE benchmark passed")'
+          python3 -c 'import json; assert json.load(open("../benchmark-sample.json"))["mode"] == "measured"; assert json.load(open("../benchmark-results.json"))["mode"] == "measured"; print("Both JSON report files overwritten with measured data")'
       - name: Validate JSON fixtures
         run: |
           python3 -m json.tool examples/http3/benchmark/transport.json >/dev/null
