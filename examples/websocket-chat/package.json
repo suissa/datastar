@@ -3,5 +3,8 @@
   "private": true,
   "type": "module",
   "scripts": { "start": "node server.mjs" },
-  "dependencies": { "ws": "^8.18.0" }
+  "dependencies": {
+    "@copilotkit/runtime": "^1.50.0",
+    "ws": "^8.18.0"
+  }
 }
