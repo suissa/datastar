@@ -11,6 +11,7 @@
 
   const connected = new WeakSet();
   const cleanups = new WeakMap();
+  const sockets = new WeakMap();
 
   function connectElement(el, channel) {
     if (connected.has(el)) return;
@@ -26,13 +27,13 @@
     const status = el.querySelector('[data-ws-status]') || document.querySelector('[data-ws-status]');
     const indicator = status?.parentElement?.querySelector('[data-ws-indicator]');
     const form = el.querySelector('form');
-    const input = form?.querySelector('[name="message"]');
 
     // The page remains at /; only the WebSocket handshake has its own endpoint.
     const scheme = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const socketUrl = new URL(scheme + '//' + window.location.host + '/ws');
     socketUrl.searchParams.set('channel', channel);
     const socket = new WebSocket(socketUrl);
+    sockets.set(el, socket);
 
     const setStatus = (text, state) => {
       if (status) status.textContent = text;
@@ -64,22 +65,10 @@
       el.dispatchEvent(new CustomEvent('datastar:ws-message', { detail: payload }));
     });
 
-    const onSubmit = (event) => {
-        // Always stop browser navigation, even while the socket is connecting.
-        event.preventDefault();
-        event.stopPropagation();
-        const text = input?.value?.trim();
-        if (!text || socket.readyState !== WebSocket.OPEN) return;
-        socket.send(JSON.stringify({ type: 'message', text }));
-        input.value = '';
-        input.focus();
-    };
-    if (form) form.addEventListener('submit', onSubmit);
-
     const cleanup = () => {
       connected.delete(el);
       cleanups.delete(el);
-      if (form) form.removeEventListener('submit', onSubmit);
+      sockets.delete(el);
       if (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING) {
         socket.close(1000, 'Element removed');
       }
@@ -102,6 +91,24 @@
     }
     root.querySelectorAll?.('[data-on\\:load], [data-on-load]').forEach(runLoadAction);
   }
+
+  // Capture submit before any framework/bubbling handler. This prevents the
+  // browser's default GET navigation even if the load action was not initialized.
+  document.addEventListener('submit', (event) => {
+    const form = event.target;
+    if (!(form instanceof HTMLFormElement)) return;
+    const el = form.closest('[data-component="chat"][data-on\\:load], [data-component="chat"][data-on-load]');
+    if (!el) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    const input = form.querySelector('[name="message"]');
+    const text = input?.value?.trim();
+    const socket = sockets.get(el);
+    if (!text || !socket || socket.readyState !== WebSocket.OPEN) return;
+    socket.send(JSON.stringify({ type: 'message', text }));
+    input.value = '';
+    input.focus();
+  }, true);
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => scan(document), { once: true });
