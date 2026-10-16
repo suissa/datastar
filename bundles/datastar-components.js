@@ -5,6 +5,8 @@
 (() => {
   const OPEN = 'open'
   const CLOSED = 'closed'
+  const OPEN_ANIMATION = 'animate__slideInDown'
+  const CLOSE_ANIMATION = 'animate__slideOutUp'
   let nextContentId = 0
   const accordionCleanups = new WeakMap()
   const animationHandlers = new WeakMap()
@@ -26,8 +28,8 @@
     if (previousHandler) content.removeEventListener('animationend', previousHandler)
 
     content.classList.remove(
-      'animate__slideInDown',
-      'animate__slideOutUp',
+      OPEN_ANIMATION,
+      CLOSE_ANIMATION,
       'animate__slideOutDown',
     )
     content.hidden = false
@@ -35,21 +37,20 @@
     // Restart the CSS animation when the same panel is toggled repeatedly.
     void content.offsetWidth
     content.classList.add('animate__animated')
-    // Content is attached to the bottom edge of the heading: it enters downward
-    // from behind the heading and collapses away from that attachment edge.
-    content.classList.add(open ? 'animate__slideInDown' : 'animate__slideOutDown')
+    // Keep the direction configurable in one place; collapse exits upward.
+    content.classList.add(open ? OPEN_ANIMATION : CLOSE_ANIMATION)
 
     const onAnimationEnd = (event) => {
       if (event.target !== content) return
 
-      const isClosing = content.classList.contains('animate__slideOutDown')
+      const isClosing = content.classList.contains(CLOSE_ANIMATION)
       if (isClosing && content.dataset.state === CLOSED) {
         content.hidden = true
       }
       content.classList.remove(
         'animate__animated',
-        'animate__slideInDown',
-        'animate__slideOutUp',
+        OPEN_ANIMATION,
+        CLOSE_ANIMATION,
         'animate__slideOutDown',
       )
       content.removeEventListener('animationend', onAnimationEnd)
@@ -86,8 +87,8 @@
         content.hidden = !open
         content.classList.remove(
           'animate__animated',
-          'animate__slideInDown',
-          'animate__slideOutUp',
+          OPEN_ANIMATION,
+          CLOSE_ANIMATION,
           'animate__slideOutDown',
         )
       }
