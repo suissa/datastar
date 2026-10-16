@@ -1,4 +1,19 @@
 /* Class-first styles for the declarative accordion component. */
+:root {
+  color-scheme: light;
+  --ds-component-text: #1f2937;
+  --ds-component-surface: transparent;
+  --ds-component-border: #d1d5db;
+  --ds-component-border-active: #64748b;
+}
+
+.dark {
+  color-scheme: dark;
+  --ds-component-text: #f1f5f9;
+  --ds-component-surface: transparent;
+  --ds-component-border: #334155;
+  --ds-component-border-active: #818cf8;
+}
 .ui-accordion {
   display: grid;
   gap: 0.5rem;
