@@ -5,6 +5,7 @@ Framework-independent Web Components inspired by the compositional API and acces
 ## Components
 
 - [Accordion](./accordion/README.md) — single/multiple disclosure panels.
+- [Audio Player](./audio-player/README.md) — responsive playlist player with playback, seeking, volume, shuffle, and repeat controls.
 - **Tabs** — `ds-tabs`, `ds-tabs-list`, `ds-tabs-trigger`, `ds-tabs-content`.
 - **Checkbox** — `ds-checkbox`, with `checked`, `disabled`, and a bubbling `checked-change` event.
 - **Switch** — `ds-switch`, with `checked`, `disabled`, and a bubbling `checked-change` event.
