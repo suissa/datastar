@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Datastar declarative components</title>
+  <link rel="stylesheet" href="../bundles/datastar-components.css">
+  <script type="module" src="../bundles/datastar.js"></script>
+</head>
+<body>
+  <main>
+    <h1>Declarative Accordion</h1>
+    <p>The component runtime coordinates state and classes; CSS owns presentation.</p>
+
+    <section data-component="accordion" data-accordion-mode="single">
+      <article data-component="accordion-item" data-state="open">
+        <h2>
+          <button type="button" data-component="accordion-trigger" aria-expanded="true">
+            What is Datastar?
+          </button>
+        </h2>
+        <div data-component="accordion-content">
+          Datastar combines declarative frontend reactivity with server-driven HTML updates.
+        </div>
+      </article>
+
+      <article data-component="accordion-item" data-state="closed">
+        <h2>
+          <button type="button" data-component="accordion-trigger" aria-expanded="false">
+            Does this require a component-specific JavaScript file?
+          </button>
+        </h2>
+        <div data-component="accordion-content" hidden>
+          No. The generic interpreter recognizes the component declaration and orchestrates
+          classes, state attributes, ARIA attributes, and click events.
+        </div>
+      </article>
+    </section>
+  </main>
+</body>
+</html>
