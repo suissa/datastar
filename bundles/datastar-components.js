@@ -75,7 +75,10 @@
 
       if (animate && wasOpen !== open) {
         animateContent(content, open)
-      } else {
+      } else if (!(animate && animationHandlers.has(content))) {
+        // A data-state mutation can be observed after the click handler has
+        // already started an animation. Do not reset visibility/classes while
+        // that animation is still running.
         content.hidden = !open
         content.classList.remove(
           'animate__animated',
