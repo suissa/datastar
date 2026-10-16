@@ -138,11 +138,11 @@ test('data-state changes on an item synchronize content and ARIA', async () => {
 test('unknown component names emit an extensibility event', async () => {
   const dom = setup('<div id="custom" data-component="my-extension"></div>')
   let detail
-  dom.window.document.querySelector('#custom').addEventListener(
+  // Listen on the document because the custom event bubbles from dynamically added components.
+  dom.window.document.addEventListener(
     'datastar-component:unknown',
     (event) => { detail = event.detail },
   )
-  // The interpreter runs before listeners can be attached; adding a second unknown node tests event dispatch.
   const element = dom.window.document.createElement('div')
   element.dataset.component = 'my-extension'
   dom.window.document.body.append(element)
