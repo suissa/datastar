@@ -5,11 +5,9 @@
 (() => {
   const OPEN = 'open'
   const CLOSED = 'closed'
-  const OPEN_ANIMATION = 'animate__slideInDown'
-  const CLOSE_ANIMATION = 'animate__slideOutUp'
   let nextContentId = 0
   const accordionCleanups = new WeakMap()
-  const animationHandlers = new WeakMap()
+  const transitionHandlers = new WeakMap()
 
   const setState = (element, open) => {
     const state = open ? OPEN : CLOSED
@@ -23,42 +21,24 @@
     content: item.querySelector('[data-component="accordion-content"]'),
   })
 
-  const animateContent = (content, open) => {
-    const previousHandler = animationHandlers.get(content)
-    if (previousHandler) content.removeEventListener('animationend', previousHandler)
+  const prepareItemTransition = (item, content, open) => {
+    const previousHandler = transitionHandlers.get(item)
+    if (previousHandler) item.removeEventListener('transitionend', previousHandler)
 
-    content.classList.remove(
-      OPEN_ANIMATION,
-      CLOSE_ANIMATION,
-      'animate__slideOutDown',
-    )
+    // The item owns the animation. Content has no independent animation or
+    // transform; its text simply follows the item's grid-row height transition.
     content.hidden = false
 
-    // Restart the CSS animation when the same panel is toggled repeatedly.
-    void content.offsetWidth
-    content.classList.add('animate__animated')
-    // Keep the direction configurable in one place; collapse exits upward.
-    content.classList.add(open ? OPEN_ANIMATION : CLOSE_ANIMATION)
-
-    const onAnimationEnd = (event) => {
-      if (event.target !== content) return
-
-      const isClosing = content.classList.contains(CLOSE_ANIMATION)
-      if (isClosing && content.dataset.state === CLOSED) {
-        content.hidden = true
+    if (!open) {
+      const onTransitionEnd = (event) => {
+        if (event.target !== item || event.propertyName !== 'grid-template-rows') return
+        if (item.dataset.state === CLOSED) content.hidden = true
+        item.removeEventListener('transitionend', onTransitionEnd)
+        transitionHandlers.delete(item)
       }
-      content.classList.remove(
-        'animate__animated',
-        OPEN_ANIMATION,
-        CLOSE_ANIMATION,
-        'animate__slideOutDown',
-      )
-      content.removeEventListener('animationend', onAnimationEnd)
-      animationHandlers.delete(content)
+      transitionHandlers.set(item, onTransitionEnd)
+      item.addEventListener('transitionend', onTransitionEnd)
     }
-
-    animationHandlers.set(content, onAnimationEnd)
-    content.addEventListener('animationend', onAnimationEnd)
   }
 
   const syncItem = (item, open, animate = false) => {
@@ -82,15 +62,14 @@
       setState(content, open)
 
       if (animate && wasOpen !== open) {
-        animateContent(content, open)
-      } else if (!(animate && animationHandlers.has(content))) {
+        prepareItemTransition(item, content, open)
+      } else {
+        const previousHandler = transitionHandlers.get(item)
+        if (previousHandler) {
+          item.removeEventListener('transitionend', previousHandler)
+          transitionHandlers.delete(item)
+        }
         content.hidden = !open
-        content.classList.remove(
-          'animate__animated',
-          OPEN_ANIMATION,
-          CLOSE_ANIMATION,
-          'animate__slideOutDown',
-        )
       }
     }
   }
