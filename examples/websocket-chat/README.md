@@ -33,3 +33,14 @@ Sem `OPENAI_API_KEY`, o exemplo usa respostas determinísticas para continuar fu
 - O servidor usa `CopilotRuntime` v2 com middleware A2UI habilitado e traduz a resposta do agente para uma mensagem A2UI v0.9 `updateComponents` no mesmo WebSocket.
 - A interface renderiza o texto com `textContent`; não interpreta HTML vindo do agente.
 - A URL da página permanece em `/`; o formulário não executa navegação nem adiciona query string.
+
+## Voz e ditado com Web Speech API
+
+A interface inclui controles nativos do navegador:
+
+- **Falar respostas do bot** usa `speechSynthesis` para ler mensagens recebidas com voz em português (`pt-BR`). Desmarque a opção para silenciar.
+- **Mostrar enquanto falo** atualiza o campo de mensagem com resultados parciais do reconhecimento.
+- **Mostrar a cada pausa** segura os resultados parciais e atualiza o texto após aproximadamente 700 ms sem novas palavras; os trechos reconhecidos como finais também são preservados.
+- **Ativar microfone** inicia/paralisa `SpeechRecognition`. O texto transcrito fica no campo para revisão e envio manual.
+
+O reconhecimento depende do suporte do navegador e da permissão do microfone. Use uma versão compatível do Chrome ou Edge e, fora de `localhost`, sirva a página por HTTPS. O reconhecimento de voz pode depender de serviços do navegador; não é garantido que funcione offline.
