@@ -30,3 +30,37 @@ This second page uses native HTML and CSS only: radio inputs for tabs, native ch
 Datastar's reactive attributes require the Datastar JavaScript runtime. CSS and native HTML can cover some interactions without JavaScript, but cannot provide the full Datastar reactive model or all Radix-style component behavior.
 
 Each component has its own JavaScript module and stylesheet under `components/<name>/`. Values are available through element properties; state changes emit bubbling custom events.
+
+
+## Declarative component interpreter
+
+For HTML-first components, use the shared interpreter in `bundles/datastar-components.js` with the class-based stylesheet `bundles/datastar-components.css`. Load it after the normal Datastar bundle:
+
+```html
+<script type="module" src="/bundles/datastar.js"></script>
+<script defer src="/bundles/datastar-components.js"></script>
+<link rel="stylesheet" href="/bundles/datastar-components.css">
+```
+
+The first component supported by this interpreter is an accordion:
+
+```html
+<section data-component="accordion" data-accordion-mode="single">
+  <article data-component="accordion-item" data-state="closed">
+    <h2>
+      <button type="button" data-component="accordion-trigger">
+        First item
+      </button>
+    </h2>
+    <div data-component="accordion-content">
+      Content for the first item.
+    </div>
+  </article>
+</section>
+```
+
+Supported component names are `accordion`, `accordion-item`, `accordion-trigger`, and `accordion-content`. Use `data-accordion-mode="multiple"` to allow multiple items to remain open; the default is `single`.
+
+The interpreter uses a MutationObserver so component declarations in HTML added later (including server-patched HTML) are initialized too. It updates `data-state`, ARIA attributes, and classes such as `ui-accordion__item`, `ui-accordion__trigger`, `ui-accordion__content`, `is-open`, and `is-closed`. CSS controls presentation. It does not require a separate JavaScript file for each component.
+
+The TypeScript plugin is also registered in `library/src/bundles/datastar.ts`, so it is included when the Datastar library bundle is rebuilt. The standalone `bundles/datastar-components.js` is provided for testing the interpreter before rebuilding the main generated bundle.

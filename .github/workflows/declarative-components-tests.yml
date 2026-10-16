@@ -1,0 +1,29 @@
+name: Declarative Components Tests
+
+on:
+  pull_request:
+    branches: [develop]
+    paths:
+      - 'bundles/datastar-components.js'
+      - 'tests/declarative-components.test.cjs'
+      - '.github/workflows/declarative-components-tests.yml'
+  push:
+    branches: [develop, feat/declarative-components]
+    paths:
+      - 'bundles/datastar-components.js'
+      - 'tests/declarative-components.test.cjs'
+      - '.github/workflows/declarative-components-tests.yml'
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install test dependency
+        run: npm install --no-save --no-package-lock jsdom@26
+      - name: Run declarative component tests
+        run: node --test tests/declarative-components.test.cjs
